@@ -1,0 +1,12 @@
+{
+  "name": "AI Language Academy",
+  "short_name": "Academy",
+  "description": "Μικρά μαθήματα Αγγλικών, με εξηγήσεις στα Ελληνικά.",
+  "lang": "el",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8f7f2",
+  "theme_color": "#175c52",
+  "icons": [{"src": "/assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}]
+}

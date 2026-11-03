@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "course": {"id":"el-en-a1","nativeLanguage":"el","targetLanguage":"en","level":"A1"},
+  "lessons": [
+    {
+      "id":"first-words","title":"Οι πρώτες σου λέξεις","subtitle":"Μικρές λέξεις, μια μεγάλη αρχή","durationMinutes":5,"xp":30,"objective":"Αναγνωρίζω και γράφω τρεις καθημερινές αγγλικές λέξεις.",
+      "cards":[
+        {"word":"car","translation":"αυτοκίνητο","pronunciation":"καρ","example":"This is a car.","exampleTranslation":"Αυτό είναι ένα αυτοκίνητο.","image":"/assets/car.svg"},
+        {"word":"book","translation":"βιβλίο","pronunciation":"μπουκ","example":"This is a book.","exampleTranslation":"Αυτό είναι ένα βιβλίο.","image":"/assets/book.svg"},
+        {"word":"apple","translation":"μήλο","pronunciation":"άπλ","example":"This is an apple.","exampleTranslation":"Αυτό είναι ένα μήλο.","image":"/assets/apple.svg"}
+      ],
+      "exercises":[
+        {"id":"car","type":"translate","prompt":"Πώς λέμε «αυτοκίνητο» στα αγγλικά;","answer":"car","acceptedAnswers":["car","a car"],"explanation":"Το αυτοκίνητο λέγεται car. Το a car σημαίνει ένα αυτοκίνητο.","hint":"Αρχίζει από c και έχει 3 γράμματα."},
+        {"id":"book","type":"translate","prompt":"Πώς λέμε «βιβλίο» στα αγγλικά;","answer":"book","acceptedAnswers":["book","a book"],"explanation":"Το βιβλίο λέγεται book. Τα δύο o ακούγονται περίπου σαν σύντομο «ου».","hint":"Αρχίζει από b και έχει δύο o."},
+        {"id":"apple","type":"translate","prompt":"Πώς λέμε «μήλο» στα αγγλικά;","answer":"apple","acceptedAnswers":["apple","an apple"],"explanation":"Το μήλο λέγεται apple. Λέμε an apple, γιατί η λέξη αρχίζει από φωνηεντικό ήχο.","hint":"Αρχίζει από a και έχει δύο p."}
+      ]
+    },
+    {
+      "id":"greetings","title":"Χαίρομαι που σε γνωρίζω","subtitle":"Η πρώτη σου μικρή συζήτηση","durationMinutes":5,"xp":30,"objective":"Χαιρετώ, ευχαριστώ και συστήνομαι στα αγγλικά.",
+      "cards":[
+        {"word":"Hello!","translation":"Γεια σου!","pronunciation":"χελόου","example":"Hello! My name is Alex.","exampleTranslation":"Γεια σου! Με λένε Άλεξ."},
+        {"word":"Thank you!","translation":"Ευχαριστώ!","pronunciation":"θενκ γιου","example":"Thank you for your help.","exampleTranslation":"Ευχαριστώ για τη βοήθειά σου."},
+        {"word":"My name is…","translation":"Με λένε…","pronunciation":"μάι νέιμ ιζ","example":"My name is Maria.","exampleTranslation":"Με λένε Μαρία."}
+      ],
+      "exercises":[
+        {"id":"hello","type":"translate","prompt":"Χαιρέτησε κάποιον με ένα «Γεια σου» στα αγγλικά.","answer":"hello","acceptedAnswers":["hello","hi"],"explanation":"Μπορείς να πεις Hello ή το πιο ανεπίσημο Hi.","hint":"Η λέξη αρχίζει από h."},
+        {"id":"thanks","type":"translate","prompt":"Πώς λέμε «Ευχαριστώ»;","answer":"thank you","acceptedAnswers":["thank you","thanks"],"explanation":"Thank you σημαίνει ευχαριστώ. Το Thanks είναι πιο ανεπίσημο.","hint":"Δύο λέξεις: Thank …"},
+        {"id":"name","type":"gap","prompt":"Συμπλήρωσε μόνο τη λέξη που λείπει: My ___ is Maria.","answer":"name","acceptedAnswers":["name"],"explanation":"My name is Maria σημαίνει Με λένε Μαρία. Η λέξη name σημαίνει όνομα.","hint":"Σημαίνει «όνομα»."}
+      ]
+    },
+    {
+      "id":"simple-sentences","title":"Μια ολόκληρη πρόταση","subtitle":"Βάζουμε τις λέξεις στη σειρά","durationMinutes":7,"xp":40,"objective":"Χρησιμοποιώ το I am και διαλέγω σωστά a ή an σε απλές προτάσεις.",
+      "cards":[
+        {"word":"I am a student.","translation":"Είμαι μαθητής / μαθήτρια.","pronunciation":"άι αμ ε στιούντεντ","example":"I am a student.","exampleTranslation":"Το I σημαίνει εγώ και το am σημαίνει είμαι."},
+        {"word":"This is a book.","translation":"Αυτό είναι ένα βιβλίο.","pronunciation":"δις ιζ ε μπουκ","example":"This is a car.","exampleTranslation":"Χρησιμοποιούμε a πριν από σύμφωνο ήχο.","image":"/assets/book.svg"},
+        {"word":"This is an apple.","translation":"Αυτό είναι ένα μήλο.","pronunciation":"δις ιζ εν άπλ","example":"This is an apple.","exampleTranslation":"Χρησιμοποιούμε an πριν από φωνηεντικό ήχο.","image":"/assets/apple.svg"}
+      ],
+      "exercises":[
+        {"id":"am","type":"gap","prompt":"Συμπλήρωσε μόνο τη λέξη που λείπει: I ___ a student.","answer":"am","acceptedAnswers":["am"],"explanation":"Με το I χρησιμοποιούμε am: I am a student. Σημαίνει Είμαι μαθητής / μαθήτρια.","hint":"Το «είμαι» μετά το I έχει δύο γράμματα."},
+        {"id":"an","type":"gap","prompt":"Συμπλήρωσε a ή an: This is ___ apple.","answer":"an","acceptedAnswers":["an"],"explanation":"Το apple αρχίζει από φωνηεντικό ήχο, γι’ αυτό χρησιμοποιούμε an.","hint":"Η λέξη apple αρχίζει από φωνηεντικό ήχο."},
+        {"id":"a","type":"gap","prompt":"Συμπλήρωσε a ή an: This is ___ book.","answer":"a","acceptedAnswers":["a"],"explanation":"Το book αρχίζει από σύμφωνο ήχο, γι’ αυτό χρησιμοποιούμε a.","hint":"Η λέξη book αρχίζει από σύμφωνο ήχο."}
+      ]
+    }
+  ]
+}
