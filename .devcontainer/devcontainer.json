@@ -1,0 +1,13 @@
+{
+  "name": "AI Language Academy",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "AI Language Academy",
+      "onAutoForward": "openBrowser",
+      "protocol": "http"
+    }
+  },
+  "postStartCommand": "python3 .devcontainer/start.py"
+}
