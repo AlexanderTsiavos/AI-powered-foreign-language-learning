@@ -1,7 +1,7 @@
-const CACHE = 'academy-public-v2';
+const CACHE = 'academy-public-v3';
 // Only public, immutable-in-session assets belong here. Never cache API calls,
 // account pages, session responses, submitted answers or personalized HTML.
-const PUBLIC_ASSETS = ['/styles.css','/app.js','/manifest.webmanifest','/assets/logo.svg','/assets/icon.svg','/assets/car.svg','/assets/book.svg','/assets/apple.svg'];
+const PUBLIC_ASSETS = ['/styles.css','/app.js','/exercises.js','/manifest.webmanifest','/assets/logo.svg','/assets/icon.svg','/assets/car.svg','/assets/book.svg','/assets/apple.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(PUBLIC_ASSETS)));
   self.skipWaiting();

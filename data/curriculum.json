@@ -40,6 +40,470 @@
         {"id":"an","type":"gap","prompt":"Συμπλήρωσε a ή an: This is ___ apple.","answer":"an","acceptedAnswers":["an"],"explanation":"Το apple αρχίζει από φωνηεντικό ήχο, γι’ αυτό χρησιμοποιούμε an.","hint":"Η λέξη apple αρχίζει από φωνηεντικό ήχο."},
         {"id":"a","type":"gap","prompt":"Συμπλήρωσε a ή an: This is ___ book.","answer":"a","acceptedAnswers":["a"],"explanation":"Το book αρχίζει από σύμφωνο ήχο, γι’ αυτό χρησιμοποιούμε a.","hint":"Η λέξη book αρχίζει από σύμφωνο ήχο."}
       ]
+    },
+    {
+      "id": "alphabet-sounds",
+      "title": "Γράμματα και ήχοι",
+      "subtitle": "Επιστρέφουμε στις βάσεις: A, B και C",
+      "durationMinutes": 7,
+      "xp": 30,
+      "objective": "Αναγνωρίζω τα γράμματα A, B και C και ξεχωρίζω το όνομα του γράμματος από τον ήχο του σε μια λέξη.",
+      "cards": [
+        {
+          "word": "A · a",
+          "translation": "Το γράμμα A",
+          "pronunciation": "όνομα γράμματος: έι",
+          "example": "A is for apple.",
+          "exampleTranslation": "Το γράμμα λέγεται έι. Στη λέξη apple ο ήχος του είναι διαφορετικός από το όνομά του."
+        },
+        {
+          "word": "B · b",
+          "translation": "Το γράμμα B",
+          "pronunciation": "όνομα γράμματος: μπι",
+          "example": "B is for book.",
+          "exampleTranslation": "Το γράμμα λέγεται μπι. Το book αρχίζει με τον σύντομο ήχο /b/, όχι με ολόκληρο το όνομα μπι."
+        },
+        {
+          "word": "C · c",
+          "translation": "Το γράμμα C",
+          "pronunciation": "όνομα γράμματος: σι",
+          "example": "C is for car.",
+          "exampleTranslation": "Το γράμμα λέγεται σι. Στο car έχει ήχο /k/. Το ίδιο γράμμα μπορεί να έχει διαφορετικούς ήχους σε άλλες λέξεις."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "letter-b",
+          "type": "multiple-choice",
+          "prompt": "Ποιο γράμμα έχει το αγγλικό όνομα «μπι»;",
+          "answer": "B",
+          "acceptedAnswers": [
+            "B"
+          ],
+          "explanation": "Το όνομα του γράμματος B είναι μπι. Το A λέγεται έι και το C λέγεται σι.",
+          "hint": "Σκέψου το πρώτο γράμμα της λέξης book.",
+          "choices": [
+            "A",
+            "B",
+            "C"
+          ]
+        },
+        {
+          "id": "letter-a",
+          "type": "multiple-choice",
+          "prompt": "Ποιο γράμμα έχει το αγγλικό όνομα «έι»;",
+          "answer": "A",
+          "acceptedAnswers": [
+            "A"
+          ],
+          "explanation": "Το A λέγεται έι ως όνομα γράμματος. Αυτό δεν σημαίνει ότι ακούγεται πάντα έτσι μέσα στις λέξεις.",
+          "hint": "Είναι το πρώτο γράμμα του αγγλικού αλφαβήτου.",
+          "choices": [
+            "C",
+            "A",
+            "B"
+          ]
+        },
+        {
+          "id": "listen-c",
+          "type": "listening",
+          "prompt": "Άκου το όνομα του γράμματος. Γράψε μόνο A, B ή C.",
+          "answer": "C",
+          "acceptedAnswers": [
+            "C"
+          ],
+          "explanation": "Στη φράση The letter C, το όνομα του γράμματος ακούγεται σι. Η απάντηση είναι C.",
+          "hint": "Η λέξη letter σημαίνει γράμμα.",
+          "audioText": "The letter C."
+        }
+      ]
+    },
+    {
+      "id": "numbers-time",
+      "title": "Μετράμε και λέμε την ώρα",
+      "subtitle": "Αριθμοί από το ένα ως το πέντε",
+      "durationMinutes": 7,
+      "xp": 30,
+      "objective": "Αναγνωρίζω τους αριθμούς ένα έως πέντε και καταλαβαίνω μια απλή ακέραιη ώρα.",
+      "cards": [
+        {
+          "word": "one · two · three",
+          "translation": "ένα · δύο · τρία",
+          "pronunciation": "ουάν · του · θρι",
+          "example": "I have two books.",
+          "exampleTranslation": "Έχω δύο βιβλία. Μετά το two βάζουμε το book στον πληθυντικό: books."
+        },
+        {
+          "word": "four · five",
+          "translation": "τέσσερα · πέντε",
+          "pronunciation": "φορ · φάιβ",
+          "example": "I have five books.",
+          "exampleTranslation": "Έχω πέντε βιβλία. Four είναι τέσσερα και five είναι πέντε."
+        },
+        {
+          "word": "It is three o'clock.",
+          "translation": "Είναι τρεις ακριβώς.",
+          "pronunciation": "ιτ ιζ θρι οκλόκ",
+          "example": "It is five o'clock.",
+          "exampleTranslation": "Είναι πέντε ακριβώς. Το o’clock χρησιμοποιείται για μια ακέραιη ώρα."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "number-three",
+          "type": "multiple-choice",
+          "prompt": "Ποιος αριθμός είναι το three;",
+          "answer": "3",
+          "acceptedAnswers": [
+            "3",
+            "three"
+          ],
+          "explanation": "Το three σημαίνει τρία. Το two σημαίνει δύο και το five σημαίνει πέντε.",
+          "hint": "Μετά το two έρχεται το three.",
+          "choices": [
+            "2",
+            "3",
+            "5"
+          ]
+        },
+        {
+          "id": "listen-five",
+          "type": "listening",
+          "prompt": "Άκου την ώρα. Ποιον αριθμό άκουσες; Γράψε τη λέξη ή το ψηφίο.",
+          "answer": "five",
+          "acceptedAnswers": [
+            "five",
+            "5"
+          ],
+          "explanation": "It is five o’clock σημαίνει Είναι πέντε ακριβώς. Αρκεί η απάντηση five ή 5.",
+          "hint": "Δεν χρειάζεται να γράψεις ολόκληρη την πρόταση.",
+          "audioText": "It is five o'clock."
+        },
+        {
+          "id": "order-time",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Είναι τρεις ακριβώς».",
+          "answer": "It is three o'clock",
+          "acceptedAnswers": [
+            "It is three o'clock",
+            "It is three o’clock"
+          ],
+          "explanation": "Η σωστή σειρά είναι It is three o’clock: πρώτα It, μετά is και τέλος η ώρα.",
+          "hint": "Ξεκίνα με It is.",
+          "tokens": [
+            "is",
+            "three",
+            "o'clock",
+            "It"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "everyday-objects",
+      "title": "Γύρω μας κάθε μέρα",
+      "subtitle": "Τραπέζι, καρέκλα και πόρτα",
+      "durationMinutes": 7,
+      "xp": 30,
+      "objective": "Ονομάζω τρία καθημερινά αντικείμενα και φτιάχνω μια απλή πρόταση με This is.",
+      "cards": [
+        {
+          "word": "table",
+          "translation": "τραπέζι",
+          "pronunciation": "τέιμπλ",
+          "example": "This is a table.",
+          "exampleTranslation": "Αυτό είναι ένα τραπέζι."
+        },
+        {
+          "word": "chair",
+          "translation": "καρέκλα",
+          "pronunciation": "τσερ",
+          "example": "This is a chair.",
+          "exampleTranslation": "Αυτή είναι μια καρέκλα. Το This is χρησιμοποιείται και εδώ, ανεξάρτητα από το γένος της ελληνικής λέξης."
+        },
+        {
+          "word": "door",
+          "translation": "πόρτα",
+          "pronunciation": "ντορ",
+          "example": "This is a door.",
+          "exampleTranslation": "Αυτή είναι μια πόρτα. Το a σημαίνει ένα ή μία· δεν αλλάζει με το γένος της ελληνικής λέξης."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "choose-chair",
+          "type": "multiple-choice",
+          "prompt": "Ποια αγγλική λέξη σημαίνει «καρέκλα»;",
+          "answer": "chair",
+          "acceptedAnswers": [
+            "chair"
+          ],
+          "explanation": "Chair σημαίνει καρέκλα, table σημαίνει τραπέζι και door σημαίνει πόρτα.",
+          "hint": "Δεν είναι ούτε table ούτε door.",
+          "choices": [
+            "door",
+            "chair",
+            "table"
+          ]
+        },
+        {
+          "id": "order-door",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Αυτή είναι μια πόρτα».",
+          "answer": "This is a door",
+          "acceptedAnswers": [
+            "This is a door"
+          ],
+          "explanation": "This is a door είναι μια ολοκληρωμένη πρόταση. Κρατάμε τη σειρά This → is → a → door.",
+          "hint": "Ξεκίνα με This is.",
+          "tokens": [
+            "door",
+            "a",
+            "This",
+            "is"
+          ]
+        },
+        {
+          "id": "listen-table",
+          "type": "listening",
+          "prompt": "Άκου την πρόταση. Ποιο αντικείμενο αναφέρεται; Γράψε μόνο την αγγλική λέξη.",
+          "answer": "table",
+          "acceptedAnswers": [
+            "table"
+          ],
+          "explanation": "Η φράση This is a table σημαίνει Αυτό είναι ένα τραπέζι. Η λέξη του αντικειμένου είναι table.",
+          "hint": "Η λέξη αρχίζει από t.",
+          "audioText": "This is a table."
+        }
+      ]
+    },
+    {
+      "id": "present-simple",
+      "title": "Τι κάνουμε κάθε μέρα",
+      "subtitle": "I read, he reads: ένα μικρό αλλά σημαντικό s",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Χρησιμοποιώ απλές καταφατικές και αρνητικές προτάσεις στον απλό ενεστώτα με I και he.",
+      "cards": [
+        {
+          "word": "I read a book.",
+          "translation": "Διαβάζω ένα βιβλίο.",
+          "pronunciation": "άι ριντ ε μπουκ",
+          "example": "I read every day.",
+          "exampleTranslation": "Διαβάζω κάθε μέρα. Με το I χρησιμοποιούμε read χωρίς τελικό s."
+        },
+        {
+          "word": "He reads a book.",
+          "translation": "Αυτός διαβάζει ένα βιβλίο.",
+          "pronunciation": "χι ριντζ ε μπουκ",
+          "example": "He reads every day.",
+          "exampleTranslation": "Αυτός διαβάζει κάθε μέρα. Με he, she και it προσθέτουμε συνήθως -s στο ρήμα στον απλό ενεστώτα."
+        },
+        {
+          "word": "He does not read.",
+          "translation": "Αυτός δεν διαβάζει.",
+          "pronunciation": "χι νταζ νοτ ριντ",
+          "example": "He does not read every day.",
+          "exampleTranslation": "Αυτός δεν διαβάζει κάθε μέρα. Μετά το does not το ρήμα επιστρέφει στη βασική μορφή read, χωρίς -s."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "he-reads",
+          "type": "multiple-choice",
+          "prompt": "Συμπλήρωσε: He ___ a book every day.",
+          "answer": "reads",
+          "acceptedAnswers": [
+            "reads"
+          ],
+          "explanation": "Λέμε He reads a book every day. Με he προσθέτουμε εδώ -s: read → reads.",
+          "hint": "Το υποκείμενο είναι he, όχι I.",
+          "choices": [
+            "read",
+            "reads",
+            "reading"
+          ]
+        },
+        {
+          "id": "i-read",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε μόνο το ρήμα: I ___ a book every day.",
+          "answer": "read",
+          "acceptedAnswers": [
+            "read"
+          ],
+          "explanation": "Με το I χρησιμοποιούμε read χωρίς τελικό s: I read a book every day.",
+          "hint": "Δες τη βασική μορφή του ρήματος στην πρώτη κάρτα."
+        },
+        {
+          "id": "order-negative",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Αυτός δεν διαβάζει».",
+          "answer": "He does not read",
+          "acceptedAnswers": [
+            "He does not read"
+          ],
+          "explanation": "Στην άρνηση λέμε He does not read. Μετά το does not χρησιμοποιούμε read, όχι reads.",
+          "hint": "Ξεκίνα με He does not.",
+          "tokens": [
+            "read",
+            "not",
+            "He",
+            "does"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reading-day",
+      "title": "Διαβάζω μια μικρή ιστορία",
+      "subtitle": "Γνωρίζουμε την Άννα",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Βρίσκω βασικές πληροφορίες σε ένα σύντομο αγγλικό κείμενο: όνομα, πόλη και δραστηριότητα.",
+      "cards": [
+        {
+          "word": "My name is Anna.",
+          "translation": "Με λένε Άννα.",
+          "pronunciation": "μάι νέιμ ιζ άνα",
+          "example": "My name is Anna.",
+          "exampleTranslation": "Το My name is χρησιμοποιείται για να πούμε το όνομά μας."
+        },
+        {
+          "word": "I live in Athens.",
+          "translation": "Ζω στην Αθήνα.",
+          "pronunciation": "άι λιβ ιν άθενζ",
+          "example": "I live in Athens.",
+          "exampleTranslation": "Το live σημαίνει ζω ή μένω. Το in μπαίνει εδώ πριν από την πόλη: in Athens."
+        },
+        {
+          "word": "I read a book every day.",
+          "translation": "Διαβάζω ένα βιβλίο κάθε μέρα.",
+          "pronunciation": "άι ριντ ε μπουκ έβρι ντέι",
+          "example": "I read a book every day.",
+          "exampleTranslation": "Το every day σημαίνει κάθε μέρα. Διάβασε το μικρό κείμενο ξανά για κάθε ερώτηση."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "anna-name",
+          "type": "reading",
+          "prompt": "Πώς λένε τη μαθήτρια; Γράψε μόνο το όνομά της στα αγγλικά.",
+          "answer": "Anna",
+          "acceptedAnswers": [
+            "Anna"
+          ],
+          "explanation": "Στην πρώτη πρόταση διαβάζουμε My name is Anna. Το όνομά της είναι Anna.",
+          "hint": "Βρες την πρόταση που αρχίζει με My name is.",
+          "passage": "My name is Anna. I live in Athens. I read a book every day."
+        },
+        {
+          "id": "anna-city",
+          "type": "reading",
+          "prompt": "Σε ποια πόλη ζει η Άννα; Γράψε μόνο την αγγλική ονομασία της πόλης.",
+          "answer": "Athens",
+          "acceptedAnswers": [
+            "Athens"
+          ],
+          "explanation": "Η πρόταση I live in Athens λέει ότι η Άννα ζει στην Αθήνα. Στα αγγλικά η πόλη λέγεται Athens.",
+          "hint": "Βρες την πρόταση που αρχίζει με I live in.",
+          "passage": "My name is Anna. I live in Athens. I read a book every day."
+        },
+        {
+          "id": "anna-book",
+          "type": "reading",
+          "prompt": "Τι διαβάζει η Άννα κάθε μέρα; Γράψε μόνο το αντικείμενο στα αγγλικά.",
+          "answer": "book",
+          "acceptedAnswers": [
+            "book",
+            "a book"
+          ],
+          "explanation": "Η πρόταση I read a book every day λέει ότι διαβάζει ένα βιβλίο. Το βιβλίο λέγεται book.",
+          "hint": "Βρες τη λέξη μετά το a στην τελευταία πρόταση.",
+          "passage": "My name is Anna. I live in Athens. I read a book every day."
+        }
+      ]
+    },
+    {
+      "id": "at-the-cafe",
+      "title": "Μια στάση για καφέ",
+      "subtitle": "Παραγγέλνω ευγενικά και ρωτώ την τιμή",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Παραγγέλνω έναν καφέ ευγενικά και καταλαβαίνω μια απλή τιμή από έναν μικρό κατάλογο.",
+      "cards": [
+        {
+          "word": "A coffee, please.",
+          "translation": "Έναν καφέ, παρακαλώ.",
+          "pronunciation": "ε κόφι πλιζ",
+          "example": "A coffee, please.",
+          "exampleTranslation": "Το please σημαίνει παρακαλώ. Είναι ένας απλός, ευγενικός τρόπος να κάνουμε μια παραγγελία."
+        },
+        {
+          "word": "How much is it?",
+          "translation": "Πόσο κάνει;",
+          "pronunciation": "χάου ματς ιζ ιτ",
+          "example": "How much is it?",
+          "exampleTranslation": "Με την ερώτηση How much is it? ρωτάμε την τιμή ενός πράγματος."
+        },
+        {
+          "word": "It is three euros.",
+          "translation": "Κάνει τρία ευρώ.",
+          "pronunciation": "ιτ ιζ θρι γιούροουζ",
+          "example": "The coffee is three euros.",
+          "exampleTranslation": "Ο καφές κάνει τρία ευρώ. Three σημαίνει τρία· euros είναι ο πληθυντικός του euro."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "order-coffee",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά για μια ευγενική παραγγελία καφέ.",
+          "answer": "A coffee, please",
+          "acceptedAnswers": [
+            "A coffee, please",
+            "A coffee please"
+          ],
+          "explanation": "Λέμε A coffee, please. Το please κάνει την παραγγελία μας ευγενική.",
+          "hint": "Το please μπαίνει στο τέλος αυτής της φράσης.",
+          "tokens": [
+            "please",
+            "coffee,",
+            "A"
+          ]
+        },
+        {
+          "id": "ask-price",
+          "type": "multiple-choice",
+          "prompt": "Ποια φράση χρησιμοποιείς για να ρωτήσεις «Πόσο κάνει;»;",
+          "answer": "How much is it?",
+          "acceptedAnswers": [
+            "How much is it?"
+          ],
+          "explanation": "Το How much is it? ρωτά την τιμή. Το Thank you σημαίνει ευχαριστώ και το Hello είναι χαιρετισμός.",
+          "hint": "Η ερώτηση αρχίζει με How much.",
+          "choices": [
+            "Thank you.",
+            "How much is it?",
+            "Hello!"
+          ]
+        },
+        {
+          "id": "coffee-price",
+          "type": "reading",
+          "prompt": "Διάβασε τον κατάλογο. Πόσα ευρώ κάνει ο καφές; Γράψε τον αριθμό με λέξη ή ψηφίο.",
+          "answer": "three",
+          "acceptedAnswers": [
+            "three",
+            "3",
+            "three euros",
+            "3 euros"
+          ],
+          "explanation": "Στον κατάλογο γράφει Coffee: three euros. Ο καφές κοστίζει τρία ευρώ. Απάντησε three ή 3.",
+          "hint": "Δες τη γραμμή Coffee.",
+          "passage": "Tea: two euros.\nCoffee: three euros."
+        }
+      ]
     }
   ]
 }

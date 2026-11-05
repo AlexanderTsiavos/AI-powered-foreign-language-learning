@@ -22,12 +22,15 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from teacher import TeacherError, TeacherService
+
 ROOT = Path(__file__).resolve().parent
 COOKIE = "academy_session"
 SESSION_TTL = 7 * 24 * 60 * 60
 MAX_BODY = 32 * 1024
 REVIEW_INTERVAL_DAYS = (1, 3, 7, 14, 30)
 REVIEW_ATTEMPT_LIMIT = 1000
+SESSION_TOUCH_SECONDS = 60
 
 
 def now_iso() -> str:
@@ -98,6 +101,7 @@ class AcademyServer(ThreadingHTTPServer):
         self.rate_lock = threading.Lock()
         self.auth_attempts: dict[str, list[float]] = {}
         self.dummy_password = password_hash(secrets.token_urlsafe(32))
+        self.teacher = TeacherService.from_env()
         self.db_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.initialize_db()
         super().__init__(address, AcademyHandler)
@@ -153,6 +157,18 @@ class AcademyServer(ThreadingHTTPServer):
                     PRIMARY KEY(user_id, attempt_id)
                 );
             """)
+            # Retain legacy cookies while adding independent, non-secret device IDs.
+            columns = {row["name"] for row in db.execute("PRAGMA table_info(sessions)")}
+            for column in ("public_id", "created_at", "last_seen_at"):
+                if column not in columns:
+                    db.execute(f"ALTER TABLE sessions ADD COLUMN {column} TEXT")
+            legacy_sessions = db.execute("SELECT * FROM sessions WHERE public_id IS NULL OR created_at IS NULL OR last_seen_at IS NULL").fetchall()
+            for row in legacy_sessions:
+                created_at = row["created_at"] or datetime.fromtimestamp(max(0, row["expires"]-SESSION_TTL), timezone.utc).isoformat()
+                db.execute("UPDATE sessions SET public_id=?,created_at=?,last_seen_at=? WHERE token_hash=?",
+                           (row["public_id"] or secrets.token_urlsafe(18), created_at,
+                            row["last_seen_at"] or created_at, row["token_hash"]))
+            db.execute("CREATE UNIQUE INDEX IF NOT EXISTS sessions_public_id ON sessions(public_id)")
             # Upgrade existing pilot databases without changing their users or XP.
             completions = db.execute("SELECT user_id,lesson_id,completed_at FROM completions").fetchall()
             if completions:
@@ -272,6 +288,8 @@ class AcademyHandler(BaseHTTPRequestHandler):
                 raise APIError(405, "Η μέθοδος δεν υποστηρίζεται.")
         except APIError as exc:
             self.json_response(exc.status, {"error": exc.message})
+        except TeacherError as exc:
+            self.json_response(exc.status, {"error": exc.message})
         except (BrokenPipeError, ConnectionResetError, TimeoutError):
             pass
         except (sqlite3.Error, OSError, ValueError):
@@ -315,9 +333,27 @@ class AcademyHandler(BaseHTTPRequestHandler):
         db.execute("DELETE FROM sessions WHERE expires<=?", (time.time(),))
         token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
         digest = token_digest(token)
-        db.execute("INSERT INTO sessions VALUES(?,?,?,?)", (digest, user_id, csrf, time.time()+SESSION_TTL))
+        created_at = now_iso()
+        db.execute("""INSERT INTO sessions(token_hash,user_id,csrf,expires,public_id,created_at,last_seen_at)
+                   VALUES(?,?,?,?,?,?,?)""", (digest, user_id, csrf, time.time()+SESSION_TTL,
+                                             secrets.token_urlsafe(18), created_at, created_at))
         self.new_cookie = token
         return db.execute("SELECT * FROM sessions WHERE token_hash=?", (digest,)).fetchone()
+
+    def touch_session(self, db, session):
+        if session and session["user_id"]:
+            last_seen = datetime.fromisoformat(session["last_seen_at"])
+            current = utc_now()
+            if (current-last_seen).total_seconds() >= SESSION_TOUCH_SECONDS:
+                db.execute("UPDATE sessions SET last_seen_at=? WHERE token_hash=?", (current.isoformat(), session["token_hash"]))
+
+    def session_metadata(self, db, session):
+        rows = db.execute("SELECT public_id,token_hash,created_at,last_seen_at,expires FROM sessions WHERE user_id=? AND expires>? ORDER BY created_at DESC,public_id",
+                          (session["user_id"], time.time()))
+        return [{"id": row["public_id"], "current": row["token_hash"] == session["token_hash"],
+                 "createdAt": row["created_at"], "lastSeenAt": row["last_seen_at"],
+                 "expiresAt": datetime.fromtimestamp(row["expires"], timezone.utc).isoformat()}
+                for row in rows]
 
     def require_user(self, session):
         if session is None or not session["user_id"]:
@@ -365,12 +401,15 @@ class AcademyHandler(BaseHTTPRequestHandler):
         if method == "GET" and path == "/api/curriculum":
             self.json_response(200, self.server.curriculum())
             return
+        response_headers = None
         with self.server.db() as db:
+            session = None
             if method == "GET" and path == "/api/session":
                 session = self.session(db, create=True)
                 result = self.payload(db, session)
             elif method == "GET" and path == "/api/lesson-state":
-                user_id = self.require_user(self.session(db))
+                session = self.session(db)
+                user_id = self.require_user(session)
                 query = parse_qs(urlsplit(self.path).query)
                 lesson_ids = query.get("lessonId", [])
                 if len(lesson_ids) != 1:
@@ -380,8 +419,17 @@ class AcademyHandler(BaseHTTPRequestHandler):
                                  (user_id, lesson["id"])).fetchone()
                 result = {"checkpoint": self.checkpoint_payload(row) if row else None}
             elif method == "GET" and path == "/api/review":
-                user_id = self.require_user(self.session(db))
+                session = self.session(db)
+                user_id = self.require_user(session)
                 result = self.review_payload(db, user_id)
+            elif method == "GET" and path == "/api/account/sessions":
+                session = self.session(db)
+                self.require_user(session)
+                result = {}
+            elif method == "GET" and path == "/api/teacher/status":
+                session = self.session(db)
+                self.require_user(session)
+                result = self.server.teacher.status()
             elif method == "GET" and path == "/api/export":
                 session = self.session(db)
                 user_id = self.require_user(session)
@@ -397,8 +445,7 @@ class AcademyHandler(BaseHTTPRequestHandler):
                                              "exerciseId": r["exercise_id"], "result": json.loads(r["result"]),
                                              "createdAt": r["created_at"]}
                                             for r in db.execute("SELECT * FROM review_attempts WHERE user_id=? ORDER BY created_at", (user_id,))]
-                self.json_response(200, result, {"Content-Disposition": 'attachment; filename="academy-data.json"'})
-                return
+                response_headers = {"Content-Disposition": 'attachment; filename="academy-data.json"'}
             elif method in ("POST", "PUT", "DELETE"):
                 data = self.body()
                 session = self.session(db)
@@ -406,7 +453,10 @@ class AcademyHandler(BaseHTTPRequestHandler):
                 result = self.mutate(db, session, method, path, data)
             else:
                 raise APIError(404, "Η διαδρομή δεν βρέθηκε.")
-        self.json_response(200, result)
+            self.touch_session(db, session)
+            if method == "GET" and path in ("/api/account/sessions", "/api/export"):
+                result["sessions"] = self.session_metadata(db, session)
+        self.json_response(200, result, response_headers)
 
     def mutate(self, db, session, method, path, data):
         if method == "POST" and path in ("/api/register", "/api/login"):
@@ -441,6 +491,49 @@ class AcademyHandler(BaseHTTPRequestHandler):
             session = self.new_session(db, old_hash=session["token_hash"])
             return self.payload(db, session)
         user_id = self.require_user(session)
+        if method == "POST" and path == "/api/teacher":
+            return self.server.teacher.reply(user_id, data, self.server.curriculum())
+        if method == "PUT" and path == "/api/account/profile":
+            name = data.get("name")
+            if not isinstance(name, str) or not 2 <= len(name.strip()) <= 80:
+                raise APIError(400, "Το όνομα πρέπει να έχει 2–80 χαρακτήρες.")
+            db.execute("UPDATE users SET name=? WHERE id=?", (name.strip(), user_id))
+            return self.payload(db, session)
+        if method == "POST" and path == "/api/account/password":
+            current_password, new_password = data.get("currentPassword"), data.get("newPassword")
+            if (not isinstance(current_password, str) or len(current_password) > 256
+                    or not isinstance(new_password, str) or not 10 <= len(new_password) <= 256):
+                raise APIError(400, "Ο νέος κωδικός πρέπει να έχει 10–256 χαρακτήρες.")
+            self.server.rate_limit((f"password-user:{user_id}", f"password-ip:{self.client_address[0]}"))
+            db.execute("BEGIN IMMEDIATE")
+            active = db.execute("SELECT 1 FROM sessions WHERE token_hash=? AND expires>?", (session["token_hash"], time.time())).fetchone()
+            if not active:
+                raise APIError(401, "Η συνεδρία έληξε. Συνδέσου ξανά.")
+            stored = db.execute("SELECT password_hash FROM users WHERE id=?", (user_id,)).fetchone()
+            if not stored or not password_matches(current_password, stored["password_hash"]):
+                raise APIError(401, "Ο τρέχων κωδικός δεν είναι σωστός.")
+            if new_password == current_password:
+                raise APIError(400, "Επίλεξε διαφορετικό νέο κωδικό.")
+            db.execute("UPDATE users SET password_hash=? WHERE id=?", (password_hash(new_password), user_id))
+            db.execute("DELETE FROM sessions WHERE user_id=?", (user_id,))
+            fresh_session = self.new_session(db, user_id)
+            return self.payload(db, fresh_session)
+        if method == "DELETE" and path == "/api/account/sessions":
+            session_id = data.get("sessionId")
+            if not isinstance(session_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{24}", session_id):
+                raise APIError(400, "Μη έγκυρη συνεδρία.")
+            row = db.execute("SELECT token_hash FROM sessions WHERE public_id=? AND user_id=?", (session_id, user_id)).fetchone()
+            if not row:
+                raise APIError(404, "Η συνεδρία δεν βρέθηκε.")
+            if row["token_hash"] == session["token_hash"]:
+                raise APIError(409, "Για την τρέχουσα συσκευή χρησιμοποίησε Αποσύνδεση.")
+            db.execute("DELETE FROM sessions WHERE public_id=? AND user_id=?", (session_id, user_id))
+            return {"revoked": True}
+        if method == "POST" and path == "/api/account/sessions/revoke-others":
+            count = db.execute("SELECT COUNT(*) FROM sessions WHERE user_id=? AND token_hash<>? AND expires>?",
+                               (user_id, session["token_hash"], time.time())).fetchone()[0]
+            db.execute("DELETE FROM sessions WHERE user_id=? AND token_hash<>?", (user_id, session["token_hash"]))
+            return {"revoked": count, **self.payload(db, session)}
         if method == "PUT" and path == "/api/profile":
             goal = data.get("goalMinutes", 10)
             reason = data.get("reason", "travel")
@@ -552,12 +645,14 @@ class AcademyHandler(BaseHTTPRequestHandler):
             exercise = self.server.exercise_map(lesson).get(row["exercise_id"]) if lesson else None
             if not exercise:
                 continue
-            items.append({"lessonId": row["lesson_id"], "exerciseId": row["exercise_id"],
+            item = {"lessonId": row["lesson_id"], "exerciseId": row["exercise_id"],
                           "prompt": exercise.get("prompt", ""), "answer": exercise.get("answer", ""),
                           "acceptedAnswers": accepted_answers(exercise), "type": exercise.get("type", "translate"),
                           "explanation": exercise.get("explanation", ""), "hint": exercise.get("hint", ""),
                           "dueAt": row["due_at"], "stage": row["stage"],
-                          "isDue": datetime.fromisoformat(row["due_at"]) <= current})
+                    "isDue": datetime.fromisoformat(row["due_at"]) <= current}
+            item.update({key: exercise[key] for key in ("choices", "tokens", "passage", "audioText") if key in exercise})
+            items.append(item)
         return {"items": items, "dueCount": sum(item["isDue"] for item in items)}
 
     def review_answer(self, db, user_id, data):

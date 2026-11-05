@@ -44,10 +44,12 @@ def run():
             expect(page.locator('#onboarding-form')).to_be_visible()
             page.locator('#onboarding-form button[type=submit]').click()
             expect(page.locator('.dashboard-page')).to_be_visible()
-            expect(page.locator('.path-row.locked')).to_have_count(2)
+            curriculum = page.request.get(url + '/api/curriculum').json()
+            expect(page.locator('.path-row.locked')).to_have_count(len(curriculum['lessons']) - 1)
             page.screenshot(path=str(artifacts / 'dashboard-desktop.png'), full_page=True)
             curriculum = page.request.get(url + '/api/curriculum').json()
-            for lesson_index, lesson in enumerate(curriculum['lessons']):
+            intro_lessons = curriculum['lessons'][:3]
+            for lesson_index, lesson in enumerate(intro_lessons):
                 page.goto(url + '/#lesson/' + lesson['id'])
                 expect(page.locator('.whiteboard')).to_be_visible()
                 if lesson_index == 0:

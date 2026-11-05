@@ -8,10 +8,11 @@ import unittest
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from server import activity_day, create_server
+from teacher import TeacherError, TeacherService
 
 
 class ActivityDayTests(unittest.TestCase):
@@ -72,7 +73,7 @@ class ServerTests(unittest.TestCase):
         (self.root / "data").mkdir()
         self.curriculum = {"lessons": [
             {"id": "first-words", "xp": 30, "cards": [{"word": "car"}, {"word": "book"}, {"word": "water"}], "exercises": [
-                {"id": "car", "prompt": "Αυτοκίνητο;", "type": "translate", "answer": "car", "acceptedAnswers": ["car", "a car"], "explanation": "Car σημαίνει αυτοκίνητο.", "hint": "Αρχίζει από c."},
+                {"id": "car", "prompt": "Αυτοκίνητο;", "type": "translate", "answer": "car", "acceptedAnswers": ["car", "a car"], "explanation": "Car σημαίνει αυτοκίνητο.", "hint": "Αρχίζει από c.", "choices": ["car", "cat"], "tokens": ["a", "car"], "passage": "This is a car.", "audioText": "car"},
                 {"id": "book", "answer": "book"}, {"id": "water", "answer": "water"}]},
             {"id": "greetings", "xp": 30, "cards": [{"word": "hello"}], "exercises": [{"id": "hello", "answer": "hello"}]}
         ]}
@@ -106,6 +107,12 @@ class ServerTests(unittest.TestCase):
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         self.client.port = self.server.server_port
+
+    def another_device(self, email="test@example.com", password="a strong password 42"):
+        client = Client(self.server.server_port)
+        client.request("GET", "/api/session")
+        self.assertEqual(client.mutate("POST", "/api/login", {"email": email, "password": password})[0], 200)
+        return client
 
     def test_health_and_public_content(self):
         status, data, _ = self.client.request("GET", "/api/health")
@@ -163,6 +170,189 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(self.client.request("GET", "/api/session")[1]["profile"], profile)
         self.assertEqual(self.client.mutate("PUT", "/api/profile", {**profile, "targetLanguage": "fr"})[0], 400)
         self.assertEqual(self.client.mutate("PUT", "/api/profile", {**profile, "goalMinutes": True})[0], 400)
+
+    def test_account_endpoints_require_authentication_and_csrf(self):
+        self.client.request("GET", "/api/session")
+        operations = [
+            ("PUT", "/api/account/profile", {"name": "Νέο όνομα"}),
+            ("POST", "/api/account/password", {"currentPassword": "a strong password 42", "newPassword": "different strong password"}),
+            ("DELETE", "/api/account/sessions", {"sessionId": "a"*24}),
+            ("POST", "/api/account/sessions/revoke-others", {}),
+        ]
+        self.assertEqual(self.client.request("GET", "/api/account/sessions")[0], 401)
+        for method, path, data in operations:
+            self.assertEqual(self.client.mutate(method, path, data)[0], 401)
+        self.client.register()
+        for method, path, data in operations:
+            self.assertEqual(self.client.request(method, path, data)[0], 403)
+
+    def test_account_name_edit_is_trimmed_persistent_and_isolated(self):
+        self.client.register()
+        other = Client(self.server.server_port)
+        other.register("other@example.com")
+        for invalid in (None, [], " ", "x", "x"*81):
+            self.assertEqual(self.client.mutate("PUT", "/api/account/profile", {"name": invalid})[0], 400)
+        updated = self.client.mutate("PUT", "/api/account/profile", {"name": "  Αλέξανδρος  "})
+        self.assertEqual(updated[0], 200)
+        self.assertEqual(updated[1]["user"]["name"], "Αλέξανδρος")
+        self.assertEqual(self.client.request("GET", "/api/session")[1]["user"]["name"], "Αλέξανδρος")
+        self.assertEqual(other.request("GET", "/api/session")[1]["user"]["name"], "Δοκιμή")
+        self.restart_server()
+        self.assertEqual(self.client.request("GET", "/api/session")[1]["user"]["name"], "Αλέξανδρος")
+
+    def test_password_change_validates_rotates_and_revokes_every_old_session(self):
+        self.client.register()
+        self.complete_first()
+        device = self.another_device()
+        old_cookie, old_csrf = self.client.cookie, self.client.csrf
+        credentials = {"currentPassword": "a strong password 42", "newPassword": "new strong password 99"}
+        for data in ({**credentials, "currentPassword": []}, {**credentials, "newPassword": "short"},
+                     {**credentials, "newPassword": "x"*257}, {**credentials, "newPassword": credentials["currentPassword"]}):
+            self.assertEqual(self.client.mutate("POST", "/api/account/password", data)[0], 400)
+        self.assertEqual(self.client.mutate("POST", "/api/account/password", {**credentials, "currentPassword": "wrong password"})[0], 401)
+        changed = self.client.mutate("POST", "/api/account/password", credentials)
+        self.assertEqual(changed[0], 200)
+        self.assertIsNotNone(changed[1]["user"])
+        self.assertEqual(changed[1]["progress"]["xp"], 30)
+        self.assertNotEqual((self.client.cookie, self.client.csrf), (old_cookie, old_csrf))
+        self.assertNotEqual(self.client.cookie, old_cookie)
+        self.assertNotEqual(self.client.csrf, old_csrf)
+        self.assertEqual(self.client.request("PUT", "/api/account/profile", {"name": "Changed", "csrfToken": old_csrf})[0], 403)
+        stale = Client(self.server.server_port)
+        stale.cookie = old_cookie
+        self.assertIsNone(stale.request("GET", "/api/session")[1]["user"])
+        self.assertIsNone(device.request("GET", "/api/session")[1]["user"])
+        self.assertEqual(len(self.client.request("GET", "/api/account/sessions")[1]["sessions"]), 1)
+        self.assertEqual(device.mutate("POST", "/api/login", {"email": "test@example.com", "password": credentials["currentPassword"]})[0], 401)
+        self.assertEqual(device.mutate("POST", "/api/login", {"email": "test@example.com", "password": credentials["newPassword"]})[0], 200)
+        with self.server.db() as db:
+            stored = db.execute("SELECT password_hash FROM users").fetchone()[0]
+        self.assertTrue(stored.startswith("scrypt$"))
+        self.assertNotIn(credentials["newPassword"], stored)
+
+    def test_password_change_wrong_current_is_rate_limited(self):
+        self.client.register()
+        for _ in range(15):
+            self.assertEqual(self.client.mutate("POST", "/api/account/password", {"currentPassword": "incorrect", "newPassword": "new strong password"})[0], 401)
+        self.assertEqual(self.client.mutate("POST", "/api/account/password", {"currentPassword": "incorrect", "newPassword": "new strong password"})[0], 429)
+        self.assertIsNotNone(self.client.request("GET", "/api/session")[1]["user"])
+
+    def test_session_metadata_is_safe_and_revoke_is_owner_scoped(self):
+        self.client.register()
+        device = self.another_device()
+        other = Client(self.server.server_port)
+        other.register("other@example.com")
+        sessions = self.client.request("GET", "/api/account/sessions")[1]["sessions"]
+        self.assertEqual(len(sessions), 2)
+        self.assertEqual(sum(item["current"] for item in sessions), 1)
+        for item in sessions:
+            self.assertEqual(set(item), {"id", "current", "createdAt", "lastSeenAt", "expiresAt"})
+            self.assertEqual(len(item["id"]), 24)
+        exported = self.client.request("GET", "/api/export")[1]
+        self.assertEqual(exported["sessions"], sessions)
+        with self.server.db() as db:
+            secret_values = [row[key] for row in db.execute("SELECT token_hash,csrf FROM sessions") for key in ("token_hash", "csrf")]
+        for secret in secret_values:
+            self.assertNotIn(secret, json.dumps(exported))
+            self.assertNotIn(secret, json.dumps(sessions))
+        current_id = next(item["id"] for item in sessions if item["current"])
+        device_id = next(item["id"] for item in sessions if not item["current"])
+        foreign_id = other.request("GET", "/api/account/sessions")[1]["sessions"][0]["id"]
+        for session_id, expected in ((current_id, 409), (foreign_id, 404), ("x"*24, 404), ([], 400)):
+            self.assertEqual(self.client.mutate("DELETE", "/api/account/sessions", {"sessionId": session_id})[0], expected)
+        self.assertEqual(self.client.mutate("DELETE", "/api/account/sessions", {"sessionId": device_id})[1], {"revoked": True})
+        self.assertIsNone(device.request("GET", "/api/session")[1]["user"])
+        self.assertIsNotNone(other.request("GET", "/api/session")[1]["user"])
+        self.assertEqual(self.client.request("GET", "/api/account/sessions")[1]["sessions"][0]["id"], current_id)
+
+    def test_revoke_others_retains_current_session_and_other_accounts(self):
+        self.client.register()
+        first, second = self.another_device(), self.another_device()
+        other = Client(self.server.server_port)
+        other.register("other@example.com")
+        cookie, csrf = self.client.cookie, self.client.csrf
+        response = self.client.mutate("POST", "/api/account/sessions/revoke-others")
+        self.assertEqual(response[0], 200)
+        self.assertEqual(response[1]["revoked"], 2)
+        self.assertEqual((self.client.cookie, self.client.csrf), (cookie, csrf))
+        self.assertIsNotNone(response[1]["user"])
+        self.assertIsNone(first.request("GET", "/api/session")[1]["user"])
+        self.assertIsNone(second.request("GET", "/api/session")[1]["user"])
+        self.assertIsNotNone(other.request("GET", "/api/session")[1]["user"])
+        self.assertEqual(self.client.mutate("POST", "/api/account/sessions/revoke-others")[1]["revoked"], 0)
+
+    def test_session_activity_is_throttled_and_assets_do_not_touch_database(self):
+        self.client.register()
+        start = datetime(2026, 11, 5, 12, tzinfo=timezone.utc)
+        original = (start-timedelta(minutes=2)).isoformat()
+        with self.server.db() as db:
+            db.execute("UPDATE sessions SET last_seen_at=?", (original,))
+        with patch("server.utc_now", return_value=start):
+            self.client.request("GET", "/")
+            with self.server.db() as db:
+                self.assertEqual(db.execute("SELECT last_seen_at FROM sessions").fetchone()[0], original)
+            self.client.request("GET", "/api/session")
+        with patch("server.utc_now", return_value=start+timedelta(seconds=30)):
+            self.client.request("GET", "/api/session")
+        with self.server.db() as db:
+            self.assertEqual(db.execute("SELECT last_seen_at FROM sessions").fetchone()[0], start.isoformat())
+        # A write API that opens its own transaction must still work when the touch is due.
+        with patch("server.utc_now", return_value=start+timedelta(minutes=2)):
+            self.assertEqual(self.client.mutate("PUT", "/api/lesson-state", self.checkpoint())[0], 200)
+        with self.server.db() as db:
+            self.assertEqual(db.execute("SELECT last_seen_at FROM sessions").fetchone()[0], (start+timedelta(minutes=2)).isoformat())
+
+    def test_legacy_session_schema_migration_preserves_cookies_and_is_idempotent(self):
+        self.client.register()
+        device = self.another_device()
+        with self.server.db() as db:
+            db.executescript("""
+                ALTER TABLE sessions RENAME TO sessions_with_metadata;
+                CREATE TABLE sessions(token_hash TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id) ON DELETE CASCADE,csrf TEXT NOT NULL,expires REAL NOT NULL);
+                INSERT INTO sessions SELECT token_hash,user_id,csrf,expires FROM sessions_with_metadata;
+                DROP TABLE sessions_with_metadata;
+            """)
+        self.restart_server()
+        device.port = self.server.server_port
+        self.assertIsNotNone(self.client.request("GET", "/api/session")[1]["user"])
+        self.assertIsNotNone(device.request("GET", "/api/session")[1]["user"])
+        metadata = self.client.request("GET", "/api/account/sessions")[1]["sessions"]
+        self.assertEqual(len(metadata), 2)
+        self.assertEqual(len({item["id"] for item in metadata}), 2)
+        self.server.initialize_db()
+        self.assertEqual(self.client.request("GET", "/api/account/sessions")[1]["sessions"], metadata)
+
+    def test_teacher_hooks_require_auth_csrf_and_preserve_service_errors(self):
+        self.server.teacher = Mock()
+        self.server.teacher.status.return_value = {"available": False, "provider": "disabled", "mode": "disabled", "message": "Δεν έχει ενεργοποιηθεί."}
+        self.client.request("GET", "/api/session")
+        self.assertEqual(self.client.request("GET", "/api/teacher/status")[0], 401)
+        self.assertEqual(self.client.mutate("POST", "/api/teacher", {"message": "Hello"})[0], 401)
+        self.server.teacher.reply.assert_not_called()
+        self.server.teacher.status.assert_not_called()
+        registered = self.client.register()[1]
+        self.assertEqual(self.client.request("GET", "/api/teacher/status")[1]["available"], False)
+        self.assertEqual(self.client.request("POST", "/api/teacher", {"message": "Hello"})[0], 403)
+        self.server.teacher.reply.assert_not_called()
+        self.server.teacher.reply.return_value = {"message": "Γεια σου!", "boardAction": None, "provider": "ollama", "mode": "local-ai"}
+        result = self.client.mutate("POST", "/api/teacher", {"message": "Hello", "consent": True})
+        self.assertEqual(result[0], 200)
+        args = self.server.teacher.reply.call_args.args
+        self.assertEqual(args[0], registered["user"]["id"])
+        self.assertEqual(args[1]["message"], "Hello")
+        self.assertEqual(args[2], self.curriculum)
+        self.server.teacher.reply.side_effect = TeacherError(503, "Το τοπικό μοντέλο δεν είναι διαθέσιμο.")
+        unavailable = self.client.mutate("POST", "/api/teacher", {"message": "Hello", "consent": True})
+        self.assertEqual(unavailable, (503, {"error": "Το τοπικό μοντέλο δεν είναι διαθέσιμο."}, unavailable[2]))
+
+    def test_disabled_teacher_http_has_no_invented_ai_response(self):
+        self.client.register()
+        self.server.teacher = TeacherService()
+        self.assertFalse(self.client.request("GET", "/api/teacher/status")[1]["available"])
+        status, data, _ = self.client.mutate("POST", "/api/teacher", {"message": "Hello", "consent": True})
+        self.assertEqual(status, 503)
+        self.assertIn("error", data)
+        self.assertNotIn("message", data)
 
     def test_progress_requires_auth_and_correct_answers(self):
         self.client.request("GET", "/api/session")
@@ -320,6 +510,8 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(payload["dueCount"], 0)
         car = next(item for item in payload["items"] if item["exerciseId"] == "car")
         self.assertEqual(car["acceptedAnswers"], ["car", "a car"])
+        self.assertEqual({key: car[key] for key in ("choices", "tokens", "passage", "audioText")},
+                         {"choices": ["car", "cat"], "tokens": ["a", "car"], "passage": "This is a car.", "audioText": "car"})
         self.assertEqual(car["stage"], 0)
         other = Client(self.server.server_port)
         other.register("other@example.com")
