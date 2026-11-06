@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from datetime import datetime, timezone
 import os
 from pathlib import Path
@@ -127,9 +128,23 @@ def main(argv=None):
     restore = commands.add_parser('restore')
     restore.add_argument('backup', type=Path)
     restore.add_argument('--output', type=Path, required=True)
+    doctor = commands.add_parser('doctor')
+    doctor.add_argument('--db', type=Path, default=default_database())
+    doctor.add_argument('--production', action='store_true')
+    doctor.add_argument('--json', action='store_true')
     args = parser.parse_args(argv)
     try:
-        if args.command == 'check':
+        if args.command == 'doctor':
+            from readiness import diagnose
+            report = diagnose(database=args.db, production=args.production)
+            if args.json:
+                print(json.dumps(report, ensure_ascii=False, indent=2))
+            else:
+                for check in report['checks']:
+                    print(f"{check['status'].upper()} — {check['message']}")
+                print(report['notice'])
+            return 0 if report['checksPassed'] else 1
+        elif args.command == 'check':
             check_database(args.db)
             print('Ο έλεγχος ακεραιότητας της βάσης πέρασε.')
         elif args.command == 'backup':

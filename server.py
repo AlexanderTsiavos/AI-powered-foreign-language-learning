@@ -25,6 +25,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from app_errors import ServiceError
 from assessment import AssessmentService
 from content_admin import ContentAdminService
+from email_auth import EmailAuthService
+from mailer import Mailer
 from support import SupportService
 from teacher import TeacherError, TeacherService
 
@@ -94,13 +96,14 @@ class APIError(ServiceError):
     """HTTP-side validation error, sharing the feature services' safe error format."""
 
 
-class AcademyServer(ThreadingHTTPServer):
-    daemon_threads = True
-    allow_reuse_address = True
+class AcademyState:
+    """Application services and storage, independent of the HTTP transport."""
 
-    def __init__(self, address, db_path: Path, root: Path = ROOT, secure_cookies: bool = False):
+    def __init__(self, db_path: Path, root: Path = ROOT, secure_cookies: bool = False,
+                 app_origin: str | None = None):
         self.db_path, self.root = Path(db_path), Path(root)
         self.secure_cookies = secure_cookies
+        self.app_origin = app_origin
         self.rate_lock = threading.Lock()
         self.auth_attempts: dict[str, list[float]] = {}
         self.dummy_password = password_hash(secrets.token_urlsafe(32))
@@ -108,9 +111,20 @@ class AcademyServer(ThreadingHTTPServer):
         self.content = ContentAdminService(self.db, self.root, self.base_curriculum)
         self.assessments = AssessmentService(self.db, self.curriculum, answer_matches)
         self.support = SupportService(self.db)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-        self.initialize_db()
-        super().__init__(address, AcademyHandler)
+        self.mailer = Mailer.from_env()
+        self.email_auth = EmailAuthService(self.db, self.mailer, password_hash, password_matches)
+        self._closed = False
+        try:
+            self.db_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            self.initialize_db()
+        except BaseException:
+            self.close()
+            raise
+
+    def close(self):
+        if not self._closed:
+            self._closed = True
+            self.mailer.close()
 
     def db(self):
         connection = sqlite3.connect(self.db_path, timeout=10)
@@ -182,6 +196,7 @@ class AcademyServer(ThreadingHTTPServer):
             self.content.initialize(db)
             self.assessments.initialize(db)
             self.support.initialize(db)
+            self.email_auth.initialize(db)
             self.content.install_usage_guards(db)
             # Upgrade existing pilot databases without changing their users or XP.
             completions = db.execute("SELECT user_id,lesson_id,completed_at FROM completions").fetchall()
@@ -233,8 +248,42 @@ class AcademyServer(ThreadingHTTPServer):
                 self.auth_attempts.setdefault(key, []).append(current)
 
 
+class AcademyServer(ThreadingHTTPServer):
+    """Development HTTP listener around the shared application state."""
+
+    daemon_threads = True
+    allow_reuse_address = True
+
+    def __init__(self, address, db_path: Path, root: Path = ROOT, secure_cookies: bool = False):
+        self.state = AcademyState(db_path, root, secure_cookies)
+        try:
+            super().__init__(address, AcademyHandler)
+        except BaseException:
+            self.state.close()
+            raise
+
+    def __getattr__(self, name):
+        state = self.__dict__.get("state")
+        if state is not None:
+            return getattr(state, name)
+        raise AttributeError(name)
+
+    def __setattr__(self, name, value):
+        state = self.__dict__.get("state")
+        if state is not None and name in state.__dict__:
+            setattr(state, name, value)
+        else:
+            super().__setattr__(name, value)
+
+    def server_close(self):
+        try:
+            super().server_close()
+        finally:
+            self.state.close()
+
+
 class AcademyHandler(BaseHTTPRequestHandler):
-    server: AcademyServer
+    server: AcademyServer | AcademyState
     server_version = "AcademyPilot/1"
     sys_version = ""
 
@@ -294,9 +343,13 @@ class AcademyHandler(BaseHTTPRequestHandler):
     def dispatch(self, method):
         self.new_cookie = None
         try:
+            if not self.path.startswith("/") or self.path.startswith("//"):
+                raise APIError(404, "Η διαδρομή δεν βρέθηκε.")
             path = urlsplit(self.path).path
+            if self.server.app_origin and self.headers.get("Host", "").casefold() != urlsplit(self.server.app_origin).netloc.casefold():
+                raise APIError(400, "Μη έγκυρη διεύθυνση εφαρμογής.")
             if path.startswith("/api/"):
-                self.api(method, path)
+                self.api("GET" if method == "HEAD" else method, path)
             elif path == "/data/curriculum.json" and method in ("GET", "HEAD"):
                 self.json_response(200, self.server.curriculum())
             elif method in ("GET", "HEAD"):
@@ -315,6 +368,8 @@ class AcademyHandler(BaseHTTPRequestHandler):
     def body(self):
         if self.headers.get_content_type() != "application/json":
             raise APIError(415, "Απαιτούνται δεδομένα JSON.")
+        if self.headers.get_content_charset("utf-8").casefold() not in ("utf-8", "utf8"):
+            raise APIError(415, "Απαιτούνται δεδομένα JSON σε UTF-8.")
         if self.headers.get("Transfer-Encoding"):
             raise APIError(400, "Μη υποστηριζόμενη μεταφορά δεδομένων.")
         try:
@@ -387,8 +442,13 @@ class AcademyHandler(BaseHTTPRequestHandler):
         if self.headers.get("Sec-Fetch-Site") == "cross-site":
             raise APIError(403, "Το αίτημα απορρίφθηκε για λόγους ασφαλείας.")
         if origin:
-            parsed = urlsplit(origin)
-            if parsed.scheme not in ("http", "https") or parsed.netloc != self.headers.get("Host"):
+            try:
+                parsed = urlsplit(origin)
+            except ValueError:
+                raise APIError(403, "Το αίτημα απορρίφθηκε για λόγους ασφαλείας.")
+            if (parsed.scheme not in ("http", "https") or parsed.netloc != self.headers.get("Host")
+                    or parsed.path or parsed.query or parsed.fragment or parsed.username is not None
+                    or (self.server.app_origin and origin != self.server.app_origin)):
                 raise APIError(403, "Το αίτημα απορρίφθηκε για λόγους ασφαλείας.")
         token = data.get("csrfToken", self.headers.get("X-CSRF-Token", ""))
         if not session or not isinstance(token, str) or not token.isascii() or not hmac.compare_digest(token, session["csrf"]):
@@ -396,7 +456,7 @@ class AcademyHandler(BaseHTTPRequestHandler):
 
     def payload(self, db, session):
         user_id = session["user_id"]
-        user = db.execute("SELECT id,name,email,role FROM users WHERE id=?", (user_id,)).fetchone() if user_id else None
+        user = db.execute("SELECT id,name,email,role,email_verified_at FROM users WHERE id=?", (user_id,)).fetchone() if user_id else None
         profile = db.execute("SELECT data FROM profiles WHERE user_id=?", (user_id,)).fetchone() if user_id else None
         completions = db.execute("SELECT lesson_id,xp,completed_at FROM completions WHERE user_id=? ORDER BY completed_at", (user_id,)).fetchall() if user_id else []
         activities = db.execute("SELECT day FROM activities WHERE user_id=? ORDER BY day DESC", (user_id,)).fetchall() if user_id else []
@@ -408,12 +468,12 @@ class AcademyHandler(BaseHTTPRequestHandler):
             streak += 1
             cursor -= timedelta(days=1)
         return {"user": {"id": user["id"], "name": user["name"], "email": user["email"],
-                         "isAdmin": user["role"] == "admin"} if user else None,
+                         "isAdmin": user["role"] == "admin", "emailVerified": bool(user["email_verified_at"])} if user else None,
                 "profile": json.loads(profile["data"]) if profile else None,
                 "progress": {"completedLessons": [r["lesson_id"] for r in completions],
                              "xp": sum(r["xp"] for r in completions), "streak": streak,
                              "lastActivity": activities[0]["day"] if activities else None},
-                "csrfToken": session["csrf"]}
+                "csrfToken": session["csrf"], "emailService": self.server.email_auth.status()}
 
     def api(self, method, path):
         if method == "GET" and path == "/api/health":
@@ -423,6 +483,10 @@ class AcademyHandler(BaseHTTPRequestHandler):
             return
         if method == "GET" and path == "/api/curriculum":
             self.json_response(200, self.server.curriculum())
+            return
+        if method == "GET" and path == "/api/account/email/status":
+            status = self.server.email_auth.status()
+            self.json_response(200, {"available": bool(status["enabled"] and status["configured"])})
             return
         response_headers = None
         with self.server.db() as db:
@@ -476,6 +540,7 @@ class AcademyHandler(BaseHTTPRequestHandler):
                                             for r in db.execute("SELECT * FROM review_attempts WHERE user_id=? ORDER BY created_at", (user_id,))]
                 result.update(self.server.assessments.export(user_id, db=db))
                 result.update(self.server.support.export_data(db, user_id))
+                result["emailAccount"] = self.server.email_auth.export_data(db, user_id)
                 response_headers = {"Content-Disposition": 'attachment; filename="academy-data.json"'}
             elif method in ("POST", "PUT", "DELETE"):
                 data = self.body()
@@ -527,6 +592,17 @@ class AcademyHandler(BaseHTTPRequestHandler):
         return result
 
     def mutate(self, db, session, method, path, data):
+        if method == "POST" and path == "/api/account/password/reset/request":
+            return self.server.email_auth.request_password_reset(data.get("email"), actor=self.client_address[0])
+        if method == "POST" and path == "/api/account/email/verify":
+            return self.server.email_auth.verify(data.get("token"))
+        if method == "POST" and path in ("/api/account/password/reset/confirm", "/api/account/email/change/confirm"):
+            if path == "/api/account/password/reset/confirm":
+                result = self.server.email_auth.confirm_password_reset(data.get("token"), data.get("newPassword"))
+            else:
+                result = self.server.email_auth.confirm_email_change(data.get("token"))
+            fresh = self.new_session(db, old_hash=session["token_hash"])
+            return {**self.payload(db, fresh), **result}
         if method == "POST" and path in ("/api/register", "/api/login"):
             email = data.get("email", "")
             password = data.get("password", "")
@@ -559,6 +635,11 @@ class AcademyHandler(BaseHTTPRequestHandler):
             session = self.new_session(db, old_hash=session["token_hash"])
             return self.payload(db, session)
         user_id = self.require_user(session)
+        if method == "POST" and path == "/api/account/email/verification":
+            return self.server.email_auth.request_verification(user_id, actor=self.client_address[0])
+        if method == "POST" and path == "/api/account/email/change":
+            return self.server.email_auth.request_email_change(user_id, data.get("currentPassword"),
+                                                             data.get("newEmail"), actor=self.client_address[0])
         if self.feature_route(path):
             if path.startswith("/api/admin/"):
                 self.require_admin(db, user_id)
@@ -796,11 +877,15 @@ class AcademyHandler(BaseHTTPRequestHandler):
 
 
 def create_server(host="127.0.0.1", port=8000, db_path=None, root=ROOT, secure_cookies=False):
+    if os.environ.get("ACADEMY_ENV") == "production":
+        raise ValueError("Use python run-production.py with production configuration.")
     default_db = str(ROOT.parent / "academy-data" / "academy.sqlite3")
     return AcademyServer((host, port), Path(db_path or os.environ.get("ACADEMY_DB", default_db)), root, secure_cookies)
 
 
 def main():
+    if os.environ.get("ACADEMY_ENV") == "production":
+        raise SystemExit("Use python run-production.py with production configuration.")
     parser = argparse.ArgumentParser(description="AI Language Academy development server")
     parser.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
     parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8000")))
