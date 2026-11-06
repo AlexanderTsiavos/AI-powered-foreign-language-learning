@@ -2,6 +2,7 @@
 
 import http.client
 import json
+import sqlite3
 import tempfile
 import threading
 import unittest
@@ -11,7 +12,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from server import activity_day, create_server
+from server import activity_day, create_server, password_hash
 from teacher import TeacherError, TeacherService
 
 
@@ -621,6 +622,158 @@ class ServerTests(unittest.TestCase):
         for _ in range(15):
             self.assertEqual(self.client.mutate("POST", "/api/login", {"email": "missing@example.com", "password": "wrong password"})[0], 401)
         self.assertEqual(self.client.mutate("POST", "/api/login", {"email": "missing@example.com", "password": "wrong password"})[0], 429)
+
+
+class FeatureIntegrationTests(unittest.TestCase):
+    """Exercise new services through authenticated HTTP using the real course."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.db_path = Path(self.temp.name) / "test.sqlite3"
+        self.repo = Path(__file__).resolve().parents[1]
+        self.server = create_server("127.0.0.1", 0, self.db_path, self.repo)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.client = Client(self.server.server_port)
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join()
+        self.temp.cleanup()
+
+    def grant_admin(self):
+        user = self.client.register()[1]["user"]
+        with self.server.db() as db:
+            db.execute("UPDATE users SET role='admin' WHERE id=?", (user["id"],))
+        return user
+
+    def assessment_answers(self, attempt):
+        with self.server.db() as db:
+            questions = json.loads(db.execute("SELECT questions_json FROM assessment_attempts WHERE id=?", (attempt["attemptId"],)).fetchone()[0])
+        return [{"questionId": question["id"], "answer": question["exercise"]["answer"]} for question in questions]
+
+    def test_live_admin_role_cannot_be_supplied_by_browser_and_all_features_require_login(self):
+        for path in ("/api/admin/overview", "/api/admin/curriculum", "/api/assessments", "/api/notifications", "/api/support/tickets"):
+            self.assertEqual(self.client.request("GET", path)[0], 401, path)
+        self.client.request("GET", "/api/session")
+        registered = self.client.mutate("POST", "/api/register", {"name": "Μαθητής", "email": "test@example.com", "password": "a strong password 42", "ageConfirmed": True, "role": "admin", "isAdmin": True})
+        self.assertEqual(registered[0], 200)
+        self.assertFalse(registered[1]["user"]["isAdmin"])
+        self.assertEqual(self.client.request("GET", "/api/admin/overview")[0], 403)
+        self.assertEqual(self.client.mutate("POST", "/api/admin/lessons", {"role": "admin"})[0], 403)
+        with self.server.db() as db:
+            db.execute("UPDATE users SET role='admin' WHERE id=?", (registered[1]["user"]["id"],))
+        self.assertTrue(self.client.request("GET", "/api/session")[1]["user"]["isAdmin"])
+        overview = self.client.request("GET", "/api/admin/overview")
+        self.assertEqual(overview[0], 200)
+        self.assertEqual(overview[1]["counts"]["publishedLessons"], 9)
+        self.assertNotIn("test@example.com", json.dumps(overview[1]))
+        with self.server.db() as db:
+            db.execute("UPDATE users SET role='student'")
+        self.assertFalse(self.client.request("GET", "/api/session")[1]["user"]["isAdmin"])
+        self.assertEqual(self.client.request("GET", "/api/admin/curriculum")[0], 403)
+
+    def test_admin_draft_publish_http_csrf_stale_versions_and_permanent_checkpoint_lock(self):
+        self.grant_admin()
+        base = self.client.request("GET", "/api/curriculum")[1]
+        lesson = json.loads(json.dumps(base["lessons"][0]))
+        lesson["title"] = "Αποθηκευμένος τίτλος"
+        path = "/api/admin/lessons/" + lesson["id"]
+        self.assertEqual(self.client.request("PUT", path, {"lesson": lesson, "baseVersion": 0})[0], 403)
+        saved = self.client.mutate("PUT", path, {"lesson": lesson, "baseVersion": 0})
+        self.assertEqual(saved[0], 200, saved[1])
+        self.assertEqual(saved[1]["lesson"]["version"], 1)
+        self.assertEqual(self.client.request("GET", "/api/curriculum")[1], base)
+        self.assertEqual(self.client.request("GET", "/data/curriculum.json")[1], base)
+        self.assertEqual(self.client.mutate("POST", path + "/publish", {"baseVersion": 0})[0], 409)
+        self.assertEqual(self.client.mutate("POST", path + "/publish", {"baseVersion": 1})[0], 200)
+        public = self.client.request("GET", "/api/curriculum")[1]
+        self.assertEqual(public["lessons"][0]["title"], lesson["title"])
+        self.assertEqual(self.client.request("GET", "/data/curriculum.json")[1], public)
+        checkpoint = {"lessonId": lesson["id"], "phase": "cards", "index": 0, "answers": [], "correct": False}
+        self.assertEqual(self.client.mutate("PUT", "/api/lesson-state", checkpoint)[0], 200)
+        lesson["title"] = "Αλλαγή μετά τη χρήση"
+        self.assertEqual(self.client.mutate("PUT", path, {"lesson": lesson, "baseVersion": 2})[0], 409)
+        copied = json.loads(json.dumps(lesson))
+        copied["id"] = "extra-lesson"
+        self.assertEqual(self.client.mutate("POST", "/api/admin/lessons", {"lesson": copied, "baseVersion": 0})[0], 200)
+        self.assertEqual(len(self.client.request("GET", "/api/curriculum")[1]["lessons"]), 9)
+        self.assertEqual(self.client.mutate("POST", "/api/admin/lessons/extra-lesson/publish", {"baseVersion": 1})[0], 200)
+        self.assertEqual([item["id"] for item in self.client.request("GET", "/api/curriculum")[1]["lessons"]],
+                         [item["id"] for item in base["lessons"]] + ["extra-lesson"])
+
+    def test_assessment_http_grading_retry_isolation_export_and_delete(self):
+        user = self.client.register()[1]["user"]
+        self.assertEqual(self.client.request("POST", "/api/assessments/start", {"kind": "placement"})[0], 403)
+        attempt = self.client.mutate("POST", "/api/assessments/start", {"kind": "placement"})[1]
+        answers = self.assessment_answers(attempt)
+        other = Client(self.server.server_port)
+        other.register("other@example.com")
+        self.assertEqual(other.mutate("POST", "/api/assessments/submit", {"attemptId": attempt["attemptId"], "answers": answers})[0], 404)
+        answers[0]["answer"] = "wrong"
+        payload = {"attemptId": attempt["attemptId"], "answers": answers, "score": 100, "xp": 9999}
+        graded = self.client.mutate("POST", "/api/assessments/submit", payload)
+        self.assertEqual(graded[0], 200, graded[1])
+        self.assertEqual(graded[1]["score"], 83)
+        self.assertIsNone(graded[1]["passed"])
+        self.assertEqual(self.client.mutate("POST", "/api/assessments/submit", payload)[1], graded[1])
+        answers[0]["answer"] = "changed"
+        self.assertEqual(self.client.mutate("POST", "/api/assessments/submit", payload)[0], 409)
+        exported = self.client.request("GET", "/api/export")[1]
+        self.assertEqual(exported["progress"]["xp"], 0)
+        self.assertEqual(exported["progress"]["completedLessons"], [])
+        self.assertEqual(exported["attempts"][0]["result"], graded[1])
+        self.assertEqual(other.request("GET", "/api/export")[1]["attempts"], [])
+        self.assertNotIn("questions_json", json.dumps(exported))
+        self.assertEqual(self.client.mutate("DELETE", "/api/account", {"password": "a strong password 42"})[0], 200)
+        with self.server.db() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM assessment_attempts WHERE user_id=?", (user["id"],)).fetchone()[0], 0)
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM assessment_attempt_lessons").fetchone()[0], 0)
+            self.assertGreater(db.execute("SELECT COUNT(*) FROM content_lesson_usage").fetchone()[0], 0)
+
+    def test_completion_notifies_only_on_first_successful_completion(self):
+        self.client.register()
+        lesson = self.server.lessons()[0]
+        payload = {"lessonId": lesson["id"], "answers": [exercise["answer"] for exercise in lesson["exercises"]]}
+        with patch.object(self.server.support, "notify_completion", wraps=self.server.support.notify_completion) as notification:
+            self.assertEqual(self.client.mutate("POST", "/api/progress", {**payload, "answers": ["wrong"] * len(payload["answers"])})[0], 422)
+            notification.assert_not_called()
+            self.assertEqual(self.client.mutate("POST", "/api/progress", payload)[0], 200)
+            self.assertEqual(self.client.mutate("POST", "/api/progress", payload)[0], 200)
+            self.assertEqual(notification.call_count, 1)
+
+
+class UserRoleMigrationTests(unittest.TestCase):
+    def test_legacy_users_and_passwords_survive_student_role_migration_and_registration(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "legacy.sqlite3"
+            stored_password = password_hash("a strong password 42")
+            with sqlite3.connect(path) as db:
+                db.execute("CREATE TABLE users(id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,created_at TEXT NOT NULL)")
+                db.execute("INSERT INTO users VALUES(?,?,?,?,?)", ("legacy", "Παλαιός", "old@example.com", stored_password, "2025-01-01"))
+            server = create_server("127.0.0.1", 0, path)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                server.initialize_db()
+                with server.db() as db:
+                    row = db.execute("SELECT * FROM users WHERE id='legacy'").fetchone()
+                    self.assertEqual((row["role"], row["password_hash"], row["name"]), ("student", stored_password, "Παλαιός"))
+                client = Client(server.server_port)
+                client.request("GET", "/api/session")
+                login = client.mutate("POST", "/api/login", {"email": "old@example.com", "password": "a strong password 42"})
+                self.assertEqual(login[0], 200)
+                self.assertEqual(login[1]["user"]["id"], "legacy")
+                self.assertFalse(login[1]["user"]["isAdmin"])
+                fresh = Client(server.server_port)
+                self.assertEqual(fresh.register("fresh@example.com")[0], 200)
+                with server.db() as db:
+                    self.assertEqual([row[0] for row in db.execute("SELECT DISTINCT role FROM users")], ["student"])
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join()
 
 
 if __name__ == "__main__":

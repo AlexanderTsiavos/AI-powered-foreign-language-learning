@@ -1,4 +1,7 @@
 import {renderExerciseExtras,renderExerciseInput} from './exercises.js';
+import {renderAssessmentPage} from './assessment-ui.js';
+import {renderSupportPage,renderNotificationsPage} from './support-ui.js';
+import {renderAdminPage} from './admin-ui.js';
 const app = document.querySelector('#app');
 const icons = {
   book: '<path d="M3 5c4-1 6 0 9 2 3-2 5-3 9-2v14c-4-1-6 0-9 2-3-2-5-3-9-2V5Zm9 2v14"/>',
@@ -19,7 +22,8 @@ const icons = {
   logout: '<path d="M9 4H4v16h5m4-4 4-4-4-4m-4 4h12"/>',
   download: '<path d="M12 3v12m-4-4 4 4 4-4M4 17v4h16v-4"/>',
   repeat: '<path d="M20 7H7a4 4 0 0 0-4 4m1-5-1 5 5-1m-4 7h13a4 4 0 0 0 4-4m-1 5 1-5-5 1"/>',
-  heart: '<path d="M20 5c-3-3-6-1-8 1-2-2-5-4-8-1-6 6 8 15 8 15S26 11 20 5Z"/>'
+  heart: '<path d="M20 5c-3-3-6-1-8 1-2-2-5-4-8-1-6 6 8 15 8 15S26 11 20 5Z"/>',
+  bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>'
 };
 const icon = (name, cls = '') => `<svg class="icon ${cls}" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[name] || icons.book}</svg>`;
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -46,7 +50,7 @@ async function api(path, {method = 'GET', body, signal} = {}) {
   catch(error) { if (error.name === 'AbortError') throw error; throw new Error('Δεν υπάρχει σύνδεση με τον διακομιστή. Δοκίμασε ξανά όταν επανέλθει.'); }
   let data;
   try { data = await response.json(); } catch { throw new Error('Ο διακομιστής δεν απάντησε σωστά. Δοκίμασε ξανά.'); }
-  if (!response.ok) throw new Error(data.error || 'Κάτι δεν πήγε καλά. Δοκίμασε ξανά.');
+  if (!response.ok) { const error=new Error(data.error || 'Κάτι δεν πήγε καλά. Δοκίμασε ξανά.'); error.status=response.status; throw error; }
   return data;
 }
 async function refresh() { state.session = await api('session'); dashboardReview = null; }
@@ -61,7 +65,7 @@ function shell(content, {lesson = false} = {}) {
   const user = state.session?.user;
   const header = `<a class="brand" href="#${user ? 'dashboard' : 'home'}"><img src="/assets/logo.svg" alt="" width="40" height="40"><span>AI Language<span class="brand-second">Academy<span class="brand-dot">.</span></span></span></a>`;
   if (!user) return `<header class="public-header wrap">${header}<nav aria-label="Κύρια πλοήγηση"><a class="text-link hide-small" href="#help">Πώς λειτουργεί</a><a class="button button-small button-outline" href="#login">Σύνδεση ${icon('arrow')}</a></nav></header>${content}<footer class="public-footer wrap"><span>Μια νέα γλώσσα. Ένας νέος κόσμος.</span><a href="#help">Σχετικά & απόρρητο</a><span>Δοκιμαστική έκδοση · 18+</span></footer>`;
-  return `<div class="workspace"><aside class="sidebar">${header}<span class="sidebar-label">Ο ΔΙΚΟΣ ΣΟΥ ΧΩΡΟΣ</span><nav aria-label="Κύρια πλοήγηση">${navItem('dashboard','Η διαδρομή μου','home')}${navItem('review','Επαναλήψεις','repeat')}${navItem('teacher','Καθηγητής AI','voice')}${navItem('progress','Η πρόοδός μου','chart')}${navItem('settings','Ρυθμίσεις','settings')}${navItem('help','Βοήθεια','help')}</nav><div class="sidebar-note">${icon('heart')}<p>Κάθε μικρό βήμα<br>σε πάει πιο μακριά.</p></div><button class="user-block" data-action="logout" aria-label="Αποσύνδεση"><span class="avatar">${escape(user.name.slice(0,1).toUpperCase())}</span><span>${escape(user.name)}<small>Δοκιμαστικός λογαριασμός</small></span>${icon('logout')}</button></aside><div class="workspace-main"><header class="app-header"><a class="mobile-brand" href="#dashboard"><img src="/assets/logo.svg" alt="Academy" width="34" height="34"></a><span class="course-pill"><span aria-hidden="true">🇬🇧</span> Αγγλικά <span class="level-label">A1</span></span><div class="header-metrics"><span title="Πόντοι εμπειρίας">${icon('star')} ${state.session.progress?.xp || 0} <span class="hide-small">XP</span></span><span title="Συνεχόμενες ημέρες μαθημάτων">${icon('flame')} ${state.session.progress?.streak || 0}</span><button class="mobile-logout round-button" data-action="logout" aria-label="Αποσύνδεση">${icon('logout')}</button></div></header>${content}</div><nav class="mobile-nav" aria-label="Πλοήγηση κινητού">${navItem('dashboard','Διαδρομή','home')}${navItem('review','Επανάληψη','repeat')}${navItem('progress','Πρόοδος','chart')}${navItem('settings','Ρυθμίσεις','settings')}${navItem('teacher','Καθηγητής','voice')}</nav></div>`;
+  return `<div class="workspace"><aside class="sidebar">${header}<span class="sidebar-label">Ο ΔΙΚΟΣ ΣΟΥ ΧΩΡΟΣ</span><nav aria-label="Κύρια πλοήγηση">${navItem('dashboard','Η διαδρομή μου','home')}${navItem('review','Επαναλήψεις','repeat')}${navItem('teacher','Καθηγητής AI','voice')}${navItem('progress','Η πρόοδός μου','chart')}${navItem('settings','Ρυθμίσεις','settings')}${navItem('help','Βοήθεια','help')}${user.isAdmin === true ? navItem('admin','Διαχείριση','lock') : ''}</nav><div class="sidebar-note">${icon('heart')}<p>Κάθε μικρό βήμα<br>σε πάει πιο μακριά.</p></div><button class="user-block" data-action="logout" aria-label="Αποσύνδεση"><span class="avatar">${escape(user.name.slice(0,1).toUpperCase())}</span><span>${escape(user.name)}<small>Δοκιμαστικός λογαριασμός</small></span>${icon('logout')}</button></aside><div class="workspace-main"><header class="app-header"><a class="mobile-brand" href="#dashboard"><img src="/assets/logo.svg" alt="Academy" width="34" height="34"></a><span class="course-pill"><span aria-hidden="true">🇬🇧</span> Αγγλικά <span class="level-label">A1</span></span><div class="header-metrics"><a id="notification-bell" class="round-button notification-bell" href="#notifications" aria-label="Ειδοποιήσεις">${icon('bell')}<span id="notification-badge" class="notification-badge" ${notificationSummary?.unreadCount ? '' : 'hidden'}>${Math.min(notificationSummary?.unreadCount || 0,99)}</span></a><span title="Πόντοι εμπειρίας">${icon('star')} ${state.session.progress?.xp || 0} <span class="hide-small">XP</span></span><span title="Συνεχόμενες ημέρες μαθημάτων">${icon('flame')} ${state.session.progress?.streak || 0}</span><button class="mobile-logout round-button" data-action="logout" aria-label="Αποσύνδεση">${icon('logout')}</button></div></header>${content}</div><nav class="mobile-nav" aria-label="Πλοήγηση κινητού">${navItem('dashboard','Διαδρομή','home')}${navItem('review','Επανάληψη','repeat')}${navItem('progress','Πρόοδος','chart')}${navItem('settings','Ρυθμίσεις','settings')}${navItem('teacher','Καθηγητής','voice')}</nav></div>`;
 }
 function landing() {
   return shell(`<main id="main-content" class="landing wrap" tabindex="-1"><section class="hero"><div class="hero-copy"><span class="eyebrow"><span class="tiny-dot"></span> Η ΝΕΑ ΣΟΥ ΑΡΧΗ ΣΤΑ ΑΓΓΛΙΚΑ</span><h1>Μια νέα γλώσσα.<br>Ένας κόσμος<br><em>δυνατοτήτων.</em></h1><p class="hero-description">Μάθε αγγλικά με μικρά, ξεκάθαρα μαθήματα και έναν διαδραστικό πίνακα. Στον δικό σου ρυθμό, από την πρώτη σου λέξη.</p><a class="button button-primary button-large" href="#register">Ας κάνουμε την αρχή ${icon('arrow')}</a><p class="quiet hero-footnote">Χωρίς κάρτα · Δωρεάν δοκιμαστική εφαρμογή · Για ενήλικες</p><div class="hero-trust"><span class="mini-avatars"><b>α</b><b>β</b><b>γ</b></span><span><strong>Από το «δεν ξέρω» στο «μπορώ».</strong><br>Ελληνικές εξηγήσεις. Αληθινά μικρά βήματα.</span></div></div><div class="hero-visual" aria-label="Παράδειγμα εκπαιδευτικού πίνακα"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><span class="floating-label label-top">${icon('sun')} Μια λέξη τη φορά.</span><div class="demo-board"><div class="board-topline"><span class="tiny-dot"></span> Ο ΠΙΝΑΚΑΣ ΣΟΥ <span>01 / 03</span></div><img class="hero-car" src="/assets/car.svg" alt="Πρωτότυπη εικονογράφηση αυτοκινήτου"><div class="demo-word">car <button class="round-button" data-action="speak-demo" aria-label="Άκου τη λέξη car">${icon('voice')}</button></div><span class="demo-translation">αυτοκίνητο</span><div class="demo-example"><span>This is a car.</span><small>Αυτό είναι ένα αυτοκίνητο.</small></div></div><div class="floating-label label-bottom"><span class="success-bubble">${icon('check')}</span><span><strong>Η πρώτη σου λέξη!</strong><small>Κάθε αρχή μετράει.</small></span></div><span class="decor-star" aria-hidden="true">✳</span></div></section><section class="landing-benefits" aria-label="Ο τρόπος μας"><div><span class="feature-icon">${icon('clock')}</span><span><strong>5 λεπτά αρκούν για αρχή</strong><small>Μικρά μαθήματα, χωρίς βιασύνη.</small></span></div><div><span class="feature-icon peach">${icon('book')}</span><span><strong>Βλέπεις. Ακούς. Δοκιμάζεις.</strong><small>Ένας πίνακας γεμάτος ανακαλύψεις.</small></span></div><div><span class="feature-icon yellow">${icon('globe')}</span><span><strong>Από τα ελληνικά στα αγγλικά</strong><small>Εξηγήσεις που καταλαβαίνεις.</small></span></div></section><section class="honesty-note"><strong>Μια εφαρμογή που μεγαλώνει μαζί μας.</strong> Η πρώτη έκδοση περιλαμβάνει ${state.curriculum.lessons.length} μαθήματα A1 με προκαθορισμένες εξηγήσεις. Η ξεχωριστή συνομιλία AI λειτουργεί μόνο όταν ο ιδιοκτήτης συνδέσει τοπικό μοντέλο.</section></main>`);
@@ -71,7 +75,7 @@ function auth(mode) {
   return shell(`<main id="main-content" class="auth-page wrap" tabindex="-1"><section class="auth-aside"><span class="eyebrow">ΕΝΑ ΜΙΚΡΟ ΒΗΜΑ ΓΙΑ ΣΕΝΑ</span><h1>Η επόμενη<br>ιστορία σου<br><em>ξεκινά εδώ.</em></h1><p>Δεν χρειάζεται να ξέρεις ήδη αγγλικά.<br>Αρκεί να θέλεις να κάνεις την αρχή.</p><div class="auth-art" aria-hidden="true">Aa<span>Hello!</span><i>Γεια σου!</i></div></section><section class="form-card"><span class="eyebrow">${register ? 'ΚΑΛΩΣ ΗΡΘΕΣ' : 'ΚΑΛΩΣ ΕΠΕΣΤΡΕΨΕΣ'}</span><h2>${register ? 'Ας γνωριστούμε.' : 'Συνέχισε τη διαδρομή σου.'}</h2><p class="quiet">${register ? 'Δημιούργησε τον δοκιμαστικό σου λογαριασμό.' : 'Συνδέσου στον λογαριασμό σου.'}</p><form id="auth-form" data-mode="${mode}">${register ? '<label>Πώς σε λένε;<input name="name" autocomplete="given-name" required minlength="2" maxlength="60" placeholder="Το όνομά σου"></label>' : ''}<label>Email<input type="email" name="email" autocomplete="email" required maxlength="254" placeholder="onoma@example.com"></label><label>Κωδικός<input type="password" name="password" autocomplete="${register ? 'new-password' : 'current-password'}" required minlength="${register ? '10' : '1'}" maxlength="256" placeholder="${register ? 'Τουλάχιστον 10 χαρακτήρες' : 'Ο κωδικός σου'}"></label>${register ? '<label class="checkbox-label"><input type="checkbox" name="ageConfirmed" required><span>Είμαι 18 ετών ή μεγαλύτερος/η και διάβασα την <a href="#help">ενημέρωση απορρήτου</a>.</span></label>' : ''}<p id="form-error" class="form-error" role="alert" hidden></p><button class="button button-primary button-full" type="submit">${register ? 'Δημιουργία λογαριασμού' : 'Σύνδεση'} ${icon('arrow')}</button></form><p class="auth-switch">${register ? 'Έχεις ήδη λογαριασμό; <a href="#login">Συνδέσου</a>' : 'Πρώτη φορά εδώ; <a href="#register">Κάνε την αρχή</a>'}</p><p class="small-note">Δοκιμαστική έκδοση: δεν αποστέλλονται email επιβεβαίωσης ή ανάκτησης κωδικού. Χρησιμοποίησε έναν μοναδικό κωδικό και κράτησέ τον ασφαλή.</p></section></main>`);
 }
 function onboarding() {
-  return shell(`<main id="main-content" class="page onboarding-page" tabindex="-1"><div class="page-intro"><span class="eyebrow">ΠΡΙΝ ΚΑΝΟΥΜΕ ΤΗΝ ΑΡΧΗ</span><h1>Μια διαδρομή στα μέτρα σου.</h1><p>Λίγα πράγματα για σένα, για να ξεκινήσουμε σωστά.</p></div><form id="onboarding-form" class="form-card wide-form"><div class="two-columns"><label>Η γλώσσα μου<select name="nativeLanguage"><option value="el">Ελληνικά</option></select></label><label>Θέλω να μάθω<select name="targetLanguage"><option value="en">Αγγλικά</option></select></label></div><label>Γιατί θέλεις να μάθεις αγγλικά;<select name="reason"><option value="travel">Για ταξίδια και νέες εμπειρίες</option><option value="work">Για τη δουλειά μου</option><option value="study">Για σπουδές</option><option value="personal">Για εμένα και την καθημερινότητά μου</option></select></label><fieldset><legend>Πόσο χρόνο θα ήθελες κάθε μέρα;</legend><div class="goal-options"><label><input type="radio" name="goalMinutes" value="5"><span>5 λεπτά<small>Μια μικρή αρχή</small></span></label><label><input type="radio" name="goalMinutes" value="10" checked><span>10 λεπτά<small>Ένας όμορφος ρυθμός</small></span></label><label><input type="radio" name="goalMinutes" value="15"><span>15 λεπτά<small>Ένα βήμα παραπάνω</small></span></label></div></fieldset><div class="info-box">${icon('book')}<p><strong>Ξεκινάμε από την αρχή, στο A1.</strong> Η δοκιμαστική έκδοση έχει ${state.curriculum.lessons.length} εισαγωγικά μαθήματα. Το τεστ κατάταξης και οι υπόλοιπες γλώσσες θα ακολουθήσουν.</p></div><p id="form-error" class="form-error" role="alert" hidden></p><button class="button button-primary" type="submit">Στη δική μου διαδρομή ${icon('arrow')}</button></form></main>`);
+  return shell(`<main id="main-content" class="page onboarding-page" tabindex="-1"><div class="page-intro"><span class="eyebrow">ΠΡΙΝ ΚΑΝΟΥΜΕ ΤΗΝ ΑΡΧΗ</span><h1>Μια διαδρομή στα μέτρα σου.</h1><p>Λίγα πράγματα για σένα, για να ξεκινήσουμε σωστά.</p></div><form id="onboarding-form" class="form-card wide-form"><div class="two-columns"><label>Η γλώσσα μου<select name="nativeLanguage"><option value="el">Ελληνικά</option></select></label><label>Θέλω να μάθω<select name="targetLanguage"><option value="en">Αγγλικά</option></select></label></div><label>Γιατί θέλεις να μάθεις αγγλικά;<select name="reason"><option value="travel">Για ταξίδια και νέες εμπειρίες</option><option value="work">Για τη δουλειά μου</option><option value="study">Για σπουδές</option><option value="personal">Για εμένα και την καθημερινότητά μου</option></select></label><fieldset><legend>Πόσο χρόνο θα ήθελες κάθε μέρα;</legend><div class="goal-options"><label><input type="radio" name="goalMinutes" value="5"><span>5 λεπτά<small>Μια μικρή αρχή</small></span></label><label><input type="radio" name="goalMinutes" value="10" checked><span>10 λεπτά<small>Ένας όμορφος ρυθμός</small></span></label><label><input type="radio" name="goalMinutes" value="15"><span>15 λεπτά<small>Ένα βήμα παραπάνω</small></span></label></div></fieldset><div class="info-box">${icon('book')}<p><strong>Ξεκινάμε από την αρχή, στο A1.</strong> Η δοκιμαστική έκδοση έχει ${state.curriculum.lessons.length} εισαγωγικά μαθήματα. Μπορείς να δοκιμάσεις και έξι εισαγωγικές ερωτήσεις, χωρίς αλλαγή επιπέδου ή πιστοποίηση. Οι υπόλοιπες γλώσσες θα ακολουθήσουν.</p></div><p id="form-error" class="form-error" role="alert" hidden></p><button class="button button-primary" type="submit">Στη δική μου διαδρομή ${icon('arrow')}</button></form></main>`);
 }
 function dashboard() {
   const progress = state.session.progress;
@@ -283,6 +287,7 @@ function resetPrivateViews() {
   if (teacherController) { teacherController.abort(); teacherController = null; }
   state.lesson = null; state.review = null; state.teacher = null;
   pendingReviewAttempt = null; accountSessions = null; dashboardReview = null;
+  state.assessment=null; state.support=null; state.notifications=null; state.admin=null; notificationSummary=null;
 }
 function accountMatches(userId,epoch) { return state.session.user?.id === userId && authEpoch === epoch; }
 function loadAccountSessions() {
@@ -385,13 +390,280 @@ function stopTeacherWork() {
   }
 }
 
+// Private feature responses are scoped to the account and exact route visit.
+const featureHelpers={escape,icon,athensDate,renderExerciseExtras,renderExerciseInput};
+let notificationSummary=null;
+let featureSequence=0;
+function newFeature(name,extra={}) {
+  return state[name]={visit:++featureSequence,userId:state.session.user.id,epoch:authEpoch,route:location.hash,loading:true,error:null,...extra};
+}
+function featureMatches(name,entry) {
+  return state[name]===entry && accountMatches(entry.userId,entry.epoch) && location.hash===entry.route;
+}
+function updateNotificationBadge() {
+  const badge=document.querySelector('#notification-badge'),bell=document.querySelector('#notification-bell');
+  const count=notificationSummary?.unreadCount || 0;
+  if(badge) { badge.hidden=!count; badge.textContent=String(Math.min(count,99)); }
+  if(bell) bell.setAttribute('aria-label',count ? `Ειδοποιήσεις, ${count} αδιάβαστες` : 'Ειδοποιήσεις');
+}
+function loadNotificationSummary(force=false) {
+  if(!state.session.user || (!force && notificationSummary?.userId===state.session.user.id)) return;
+  const userId=state.session.user.id,epoch=authEpoch,entry={userId,unreadCount:0}; notificationSummary=entry;
+  api('notifications').then(data=>{
+    if(notificationSummary!==entry || !accountMatches(userId,epoch)) return;
+    entry.unreadCount=data.unreadCount; updateNotificationBadge();
+  }).catch(()=>{ if(notificationSummary===entry && accountMatches(userId,epoch)) updateNotificationBadge(); });
+}
+function beginAssessmentLoad() {
+  const view=newFeature('assessment',{catalog:null,attempt:null,result:null,index:0,answers:[],pending:null});
+  api('assessments').then(data=>{
+    if(!featureMatches('assessment',view)) return;
+    Object.assign(view,{loading:false,catalog:data}); render();
+  }).catch(error=>{
+    if(!featureMatches('assessment',view)) return;
+    Object.assign(view,{loading:false,error:error.message}); render();
+  });
+}
+function assessmentView() {
+  if(!state.assessment) beginAssessmentLoad();
+  return shell(renderAssessmentPage(state.assessment,featureHelpers));
+}
+async function startAssessment(kind,unitId,button) {
+  if(busy) return;
+  const view=state.assessment; busy=true; button.disabled=true;
+  view.error=null;
+  try {
+    const attempt=await api('assessments/start',{method:'POST',body:{kind,...(kind==='unit' ? {unitId} : {})}});
+    if(!featureMatches('assessment',view)) return;
+    Object.assign(view,{attempt,result:null,index:0,answers:[],pending:null}); render();
+  } catch(error) {
+    if(featureMatches('assessment',view)) { view.error=error.message; render(); }
+  } finally { busy=false; if(button.isConnected) button.disabled=false; }
+}
+async function submitAssessment() {
+  const view=state.assessment;
+  if(!view?.attempt || view.result) return;
+  if(!view.pending) {
+    view.answers[view.index]=String(document.querySelector('#assessment-answer')?.value || '').trim();
+    if(!view.answers[view.index]) throw new Error('Γράψε πρώτα την απάντησή σου.');
+    if(view.index<view.attempt.questions.length-1) { view.index++; view.error=null; render(); return; }
+    // Keep exactly this payload after an uncertain response: server submission is idempotent.
+    view.pending=Object.freeze({attemptId:view.attempt.attemptId,answers:Object.freeze(view.attempt.questions.map((question,index)=>Object.freeze({questionId:question.id,answer:view.answers[index] || ''})))});
+  }
+  const payload=view.pending; view.error=null;
+  render();
+  const retry=document.querySelector('[data-action="assessment-submit-retry"]');
+  if(retry) { retry.disabled=true; retry.textContent='Υποβάλλουμε τη δοκιμή…'; }
+  try {
+    const result=await api('assessments/submit',{method:'POST',body:payload});
+    if(!featureMatches('assessment',view)) return;
+    Object.assign(view,{result,pending:null,error:null}); render();
+  } catch(error) {
+    if(!featureMatches('assessment',view)) return;
+    view.error=error.status===410 ? error.message : `Η υποβολή δεν επιβεβαιώθηκε. ${error.message} Η νέα προσπάθεια στέλνει ακριβώς τις ίδιες απαντήσεις.`;
+    view.expired=error.status===410; render();
+  }
+}
+function beginSupportLoad() {
+  const id=location.hash.split('/')[1],view=newFeature('support',{ticket:null,tickets:[]});
+  const path=id ? `support/tickets/${encodeURIComponent(id)}` : 'support/tickets';
+  api(path).then(data=>{
+    if(!featureMatches('support',view)) return;
+    Object.assign(view,{loading:false,ticket:data.ticket || null,tickets:data.tickets || []}); render();
+  }).catch(error=>{
+    if(!featureMatches('support',view)) return;
+    Object.assign(view,{loading:false,error:error.message,failed:true}); render();
+  });
+}
+function supportView() {
+  if(!state.support || state.support.route!==location.hash) beginSupportLoad();
+  return shell(renderSupportPage(state.support,featureHelpers));
+}
+async function saveSupport(form,data) {
+  const view=state.support;
+  const reply=form.id==='support-reply-form';
+  const result=await api(reply ? `support/tickets/${encodeURIComponent(view.ticket.id)}/messages` : 'support/tickets',{method:'POST',body:reply ? {message:data.message} : data});
+  if(!featureMatches('support',view)) return;
+  if(reply) { view.ticket=result.ticket; view.error=null; render(); }
+  else go(`support/${result.ticket.id}`);
+  toast(reply ? 'Η απάντησή σου αποθηκεύτηκε.' : 'Το αίτημά σου αποθηκεύτηκε σε αυτή την εγκατάσταση.');
+}
+async function changeSupportStatus(status) {
+  const view=state.support;
+  const result=await api(`support/tickets/${encodeURIComponent(view.ticket.id)}`,{method:'PUT',body:{status}});
+  if(!featureMatches('support',view)) return;
+  view.ticket=result.ticket; view.error=null; render();
+}
+function beginNotificationsLoad() {
+  const view=newFeature('notifications',{items:[],unreadCount:0,preferences:{reminders:true,achievements:true,supportReplies:true}});
+  Promise.all([api('notifications'),api('notifications/preferences')]).then(([data,prefs])=>{
+    if(!featureMatches('notifications',view)) return;
+    Object.assign(view,data,{preferences:prefs.preferences,loading:false});
+    notificationSummary={userId:view.userId,unreadCount:data.unreadCount}; render();
+  }).catch(error=>{
+    if(!featureMatches('notifications',view)) return;
+    Object.assign(view,{loading:false,error:error.message,failed:true}); render();
+  });
+}
+function notificationsView() {
+  if(!state.notifications) beginNotificationsLoad();
+  return shell(renderNotificationsPage(state.notifications,featureHelpers));
+}
+async function readNotifications(id) {
+  const view=state.notifications;
+  const data=await api('notifications/read',{method:'POST',body:id ? {ids:[id]} : {all:true}});
+  if(!featureMatches('notifications',view)) return;
+  Object.assign(view,data,{error:null}); notificationSummary={userId:view.userId,unreadCount:data.unreadCount}; render();
+}
+function selectAdminLesson(view,record,{copy=false}={}) {
+  const lesson=structuredClone(record.draft || record.published);
+  if(copy) lesson.id=`${lesson.id.slice(0,54)}-copy`;
+  Object.assign(view,{selectedId:record.id,creating:copy,editorJson:JSON.stringify(lesson,null,2),editorDirty:false,preview:null,error:null});
+}
+function beginAdminLoad() {
+  const tab=state.admin?.tab || 'overview';
+  const view=newFeature('admin',{tab,overview:null,lessons:[],allowedImages:[],selectedId:null,editorJson:'',editorDirty:false,preview:null,creating:false,supportLoading:false,supportTickets:[],supportTotal:0,supportOffset:0,supportFilter:'open',supportTicket:null});
+  Promise.all([api('admin/overview'),api('admin/curriculum')]).then(([overview,data])=>{
+    if(!featureMatches('admin',view)) return;
+    Object.assign(view,{overview,lessons:data.lessons,allowedImages:data.allowedImages,notice:data.contentReviewNotice,loading:false});
+    if(data.lessons.length) selectAdminLesson(view,data.lessons[0]);
+    if(view.tab==='support') loadAdminSupport(view);
+    render();
+  }).catch(error=>{
+    if(!featureMatches('admin',view)) return;
+    Object.assign(view,{loading:false,error:error.message,forbidden:error.status===403}); render();
+  });
+}
+function adminView() {
+  if(state.session.user.isAdmin!==true) return shell('<main id="main-content" class="page" tabindex="-1"><h1>Δεν έχεις πρόσβαση στη διαχείριση.</h1><p>Αυτή η σελίδα αφορά εξουσιοδοτημένους διαχειριστές.</p><a class="button button-primary" href="#dashboard">Στη διαδρομή μου</a></main>');
+  if(!state.admin) beginAdminLoad();
+  return shell(renderAdminPage(state.admin,featureHelpers));
+}
+function parseAdminEditor() {
+  const text=document.querySelector('#admin-lesson-json')?.value || state.admin.editorJson;
+  if(new TextEncoder().encode(text).length>60000) throw new Error('Το JSON είναι πολύ μεγάλο. Χώρισε το περιεχόμενο σε μικρότερα μαθήματα.');
+  let lesson;
+  try { lesson=JSON.parse(text); } catch { throw new Error('Το JSON δεν είναι έγκυρο. Έλεγξε εισαγωγικά, κόμματα και αγκύλες.'); }
+  if(!lesson || typeof lesson!=='object' || Array.isArray(lesson)) throw new Error('Το περιεχόμενο χρειάζεται ένα αντικείμενο μαθήματος JSON.');
+  return lesson;
+}
+function setAdminEditorValue(lesson,{rerender=false}={}) {
+  const view=state.admin;
+  Object.assign(view,{editorJson:JSON.stringify(lesson,null,2),editorDirty:true,preview:null,error:null});
+  const textarea=document.querySelector('#admin-lesson-json');
+  if(textarea) textarea.value=view.editorJson;
+  const publish=document.querySelector('[data-action="admin-publish"]'); if(publish) publish.disabled=true;
+  document.querySelector('#admin-preview')?.remove();
+  if(rerender) render();
+}
+function changeAdminField(input) {
+  const path=input.dataset.lessonField;
+  if(!path || !/^(id|title|subtitle|objective|xp|durationMinutes|cards\.\d+\.(word|translation|pronunciation|example|exampleTranslation|image)|exercises\.\d+\.(id|type|prompt|answer|acceptedAnswers|explanation|hint|choices|tokens|passage|audioText))$/.test(path)) return;
+  const view=state.admin,record=view.lessons.find(item=>item.id===view.selectedId);
+  if(!view.creating && record && !record.canChangeExercises) return;
+  try {
+    const lesson=JSON.parse(view.editorJson),parts=path.split('.'),key=parts.pop();
+    let owner=lesson; for(const part of parts) owner=owner[part];
+    if(!owner || typeof owner!=='object') return;
+    const old=owner[key];
+    if(['acceptedAnswers','choices','tokens'].includes(key)) owner[key]=input.value.split('\n').map(item=>item.trim()).filter(Boolean);
+    else if(['xp','durationMinutes'].includes(key)) owner[key]=Number(input.value);
+    else if(['pronunciation','example','exampleTranslation','image','hint'].includes(key) && !input.value.trim()) delete owner[key];
+    else owner[key]=input.value;
+    if(key==='answer') {
+      owner.acceptedAnswers=[input.value,...(Array.isArray(owner.acceptedAnswers) ? owner.acceptedAnswers.filter(answer=>answer!==old && answer!==input.value) : [])];
+      const accepted=document.querySelector(`[data-lesson-field="${parts.join('.')}.acceptedAnswers"]`);
+      if(accepted) accepted.value=owner.acceptedAnswers.join('\n');
+    }
+    if(key==='type') {
+      for(const extra of ['choices','tokens','passage','audioText']) delete owner[extra];
+      if(owner.type==='multiple-choice') owner.choices=[owner.answer || 'Hello','Goodbye'];
+      if(owner.type==='word-order') owner.tokens=(owner.answer || 'Hello there').split(/\s+/);
+      if(owner.type==='reading') owner.passage='Hello, Anna. My name is Alex.';
+      if(owner.type==='listening') owner.audioText=owner.answer || 'Hello';
+    }
+    setAdminEditorValue(lesson,{rerender:key==='type'});
+  } catch { formError(new Error('Διόρθωσε πρώτα το JSON στις προχωρημένες επιλογές.'),'admin-error'); }
+}
+function changeAdminRows(action,index) {
+  if(busy) return;
+  const view=state.admin,record=view.lessons.find(item=>item.id===view.selectedId);
+  if(!view.creating && record && !record.canChangeExercises) return;
+  try {
+    const lesson=parseAdminEditor();
+    if(action==='admin-add-card' && lesson.cards.length<12) lesson.cards.push({word:'Hello',translation:'Γεια σου',example:'Hello, Anna.',exampleTranslation:'Γεια σου, Άννα.'});
+    else if(action==='admin-add-exercise' && lesson.exercises.length<20) lesson.exercises.push({id:`exercise-${lesson.exercises.length+1}`,type:'translate',prompt:'Πώς λέμε «Γεια σου»;',answer:'Hello',acceptedAnswers:['Hello'],explanation:'Hello σημαίνει γεια σου.'});
+    else if(action==='admin-remove-card' && Number.isInteger(index) && index>=0 && index<lesson.cards.length && lesson.cards.length>1) lesson.cards.splice(index,1);
+    else if(action==='admin-remove-exercise' && Number.isInteger(index) && index>=0 && index<lesson.exercises.length && lesson.exercises.length>1) lesson.exercises.splice(index,1);
+    setAdminEditorValue(lesson,{rerender:true});
+  } catch(error) { formError(error,'admin-error'); }
+}
+function updateAdminRecord(view,record) {
+  const index=view.lessons.findIndex(item=>item.id===record.id);
+  if(index<0) view.lessons.push(record); else view.lessons[index]=record;
+  selectAdminLesson(view,record);
+}
+async function saveAdminDraft() {
+  const view=state.admin,lesson=parseAdminEditor(),record=view.lessons.find(item=>item.id===view.selectedId);
+  const result=await api(view.creating ? 'admin/lessons' : `admin/lessons/${encodeURIComponent(record.id)}`,{method:view.creating ? 'POST' : 'PUT',body:{lesson,baseVersion:view.creating ? 0 : record.version}});
+  if(!featureMatches('admin',view)) return;
+  updateAdminRecord(view,result.lesson);
+  view.overview.counts.draftLessons=view.lessons.filter(item=>item.draft).length;
+  render(); toast('Το προσχέδιο αποθηκεύτηκε. Για να το δουν οι μαθητές, χρειάζεται δημοσίευση.');
+}
+async function publishAdminDraft() {
+  const view=state.admin,record=view.lessons.find(item=>item.id===view.selectedId);
+  if(!record?.draft || view.editorDirty || view.creating) return;
+  const result=await api(`admin/lessons/${encodeURIComponent(record.id)}/publish`,{method:'POST',body:{baseVersion:record.version}});
+  if(!featureMatches('admin',view)) return;
+  updateAdminRecord(view,result.lesson);
+  view.overview.counts.draftLessons=view.lessons.filter(item=>item.draft).length;
+  // Refresh the same public view students will receive after publication.
+  try {
+    const curriculum=await api('curriculum');
+    if(!featureMatches('admin',view)) return;
+    state.curriculum=curriculum; view.overview.counts.publishedLessons=curriculum.lessons.length;
+  } catch(error) { if(featureMatches('admin',view)) view.error=`Το μάθημα δημοσιεύτηκε. Η τοπική λίστα δεν ανανεώθηκε: ${error.message}`; }
+  if(!featureMatches('admin',view)) return;
+  render(); toast('Το αποθηκευμένο προσχέδιο δημοσιεύτηκε στη διαδρομή.');
+}
+async function loadAdminSupport(view=state.admin,id=null) {
+  if(!view) return;
+  const token=++featureSequence; view.supportRequest=token; view.supportLoading=true; view.error=null;
+  try {
+    const data=await api(id ? `admin/support/tickets/${encodeURIComponent(id)}` : `admin/support/tickets?status=${encodeURIComponent(view.supportFilter)}&offset=${view.supportOffset}&limit=20`);
+    if(!featureMatches('admin',view) || view.supportRequest!==token) return;
+    Object.assign(view,id ? {supportTicket:data.ticket} : {supportTicket:null,supportTickets:data.tickets,supportTotal:data.total});
+    view.supportLoading=false; if(view.tab==='support') render();
+  } catch(error) {
+    if(!featureMatches('admin',view) || view.supportRequest!==token || view.tab!=='support') return;
+    view.supportLoading=false; view.error=error.message;
+    if(error.status===403) Object.assign(view,{forbidden:true,overview:null,lessons:[],supportTickets:[],supportTicket:null});
+    render();
+  }
+}
+async function replyAdminSupport(data) {
+  const view=state.admin;
+  const result=await api(`admin/support/tickets/${encodeURIComponent(view.supportTicket.id)}/messages`,{method:'POST',body:{message:data.message}});
+  if(!featureMatches('admin',view)) return;
+  view.supportTicket=result.ticket; view.error=null; render(); toast('Η απάντηση αποθηκεύτηκε στο αίτημα του μαθητή.');
+}
+async function featureAction(button,callback,errorId) {
+  if(busy) return;
+  busy=true; button.disabled=true; button.setAttribute('aria-busy','true');
+  const route=location.hash,userId=state.session.user?.id,epoch=authEpoch;
+  try { await callback(); }
+  catch(error) {
+    if(location.hash===route && accountMatches(userId,epoch)) formError(error,errorId);
+  } finally { busy=false; if(button.isConnected) { button.disabled=false; button.removeAttribute('aria-busy'); } }
+}
 function settings() {
   const profile = state.session.profile;
   loadAccountSessions();
-  return shell(`<main id="main-content" class="page settings-page" tabindex="-1"><div class="page-intro"><span class="eyebrow">Ο ΧΩΡΟΣ ΣΟΥ, ΟΙ ΕΠΙΛΟΓΕΣ ΣΟΥ</span><h1>Όπως σε βολεύει.</h1><p>Ρύθμισε τον στόχο σου και διαχειρίσου τον λογαριασμό και τις συνδέσεις σου.</p></div><div class="settings-grid"><div><section class="side-card"><h2>Ο λογαριασμός σου</h2><form id="account-profile-form" data-error-target="account-profile-error"><label>Όνομα<input name="name" value="${escape(state.session.user.name)}" autocomplete="given-name" minlength="2" maxlength="80" required></label><label>Email<input type="email" value="${escape(state.session.user.email)}" readonly></label><p id="account-profile-error" class="form-error" role="alert" hidden></p><button class="button button-primary" type="submit">Αποθήκευση ονόματος ${icon('check')}</button></form><p class="small-note">Αλλαγή email και ανάκτηση κωδικού μέσω email δεν είναι ακόμη διαθέσιμες.</p></section><section class="side-card"><h2>Η καθημερινή σου αρχή</h2><form id="settings-form"><label>Ημερήσιος στόχος<select name="goalMinutes">${[5,10,15].map(goal=>`<option value="${goal}" ${profile.goalMinutes===goal ? 'selected' : ''}>${goal} λεπτά</option>`).join('')}</select></label><p id="form-error" class="form-error" role="alert" hidden></p><button class="button button-primary" type="submit">Αποθήκευση στόχου ${icon('check')}</button></form><p class="small-note">Ο στόχος είναι προσωπική προτίμηση. Δεν μετράμε ακόμη ενεργά λεπτά μελέτης.</p></section><section class="side-card"><h2>Αλλαγή κωδικού</h2><form id="password-form" data-error-target="password-error"><label>Τρέχων κωδικός<input type="password" name="currentPassword" autocomplete="current-password" required maxlength="256"></label><label>Νέος κωδικός<input type="password" name="newPassword" autocomplete="new-password" required minlength="10" maxlength="256" placeholder="Τουλάχιστον 10 χαρακτήρες"></label><label>Επιβεβαίωση νέου κωδικού<input type="password" name="confirmPassword" autocomplete="new-password" required minlength="10" maxlength="256"></label><p id="password-error" class="form-error" role="alert" hidden></p><button class="button button-primary" type="submit">Αλλαγή κωδικού ${icon('lock')}</button></form><p class="small-note">Με την αλλαγή κωδικού αποσυνδέονται όλες οι άλλες συνδέσεις σου. Η τρέχουσα σύνδεση ανανεώνεται.</p></section><section id="account-sessions" class="side-card"><div class="section-heading"><h2>Ενεργές συνδέσεις</h2><button class="text-button" data-action="reload-sessions">Ανανέωση συνδέσεων</button></div><div id="account-session-list">${accountSessionList()}</div><button class="button button-outline settings-logout" data-action="logout">${icon('logout')} Αποσύνδεση από εδώ</button></section></div><div><section class="side-card"><h2>Η εμφάνισή σου</h2><label>Θέμα εφαρμογής<select id="theme-select"><option value="light">Φωτεινό</option><option value="dark" ${document.documentElement.dataset.theme === 'dark' ? 'selected' : ''}>Σκοτεινό</option></select></label><p class="small-note">Το θέμα αποθηκεύεται μόνο σε αυτόν τον browser. Οι ρυθμίσεις μειωμένης κίνησης της συσκευής σου εφαρμόζονται αυτόματα.</p>${installPrompt ? '<button class="button button-outline" data-action="install">Εγκατάσταση εφαρμογής</button>' : '<p class="small-note">Για εγκατάσταση, δες την επιλογή «Εγκατάσταση εφαρμογής» ή «Προσθήκη στην αρχική οθόνη» στο μενού του browser, εφόσον υποστηρίζεται.</p>'}</section><section class="side-card data-card"><h2>Τα δεδομένα σου</h2><p>Ο λογαριασμός και η πρόοδός σου αποθηκεύονται στη βάση δεδομένων αυτής της εγκατάστασης.</p><button class="button button-outline" data-action="export">${icon('download')} Εξαγωγή δεδομένων</button><button class="text-button danger-link" data-action="show-delete">Διαγραφή λογαριασμού</button><form id="delete-form" class="delete-form" hidden><p>Η διαγραφή αφαιρεί μόνιμα τον λογαριασμό και την πρόοδό σου από την ενεργή βάση. Δεν αναιρείται. Τυχόν αντίγραφα ασφαλείας χρειάζονται χωριστή πολιτική διατήρησης πριν από δημόσια χρήση.</p><label>Επιβεβαίωσε τον κωδικό σου<input type="password" name="password" autocomplete="current-password" required maxlength="256"></label><p id="delete-error" class="form-error" role="alert" hidden></p><button class="button button-danger" type="submit">Οριστική διαγραφή</button><button class="text-button" type="button" data-action="cancel-delete">Ακύρωση</button></form></section><section class="side-card"><h2>Χρειάζεσαι βοήθεια;</h2><p>Δες πώς λειτουργεί η δοκιμή και τι ισχύει για τα δεδομένα σου.</p><a class="text-link" href="#help">Βοήθεια & απόρρητο ${icon('help')}</a></section></div></div></main>`);
+  return shell(`<main id="main-content" class="page settings-page" tabindex="-1"><div class="page-intro"><span class="eyebrow">Ο ΧΩΡΟΣ ΣΟΥ, ΟΙ ΕΠΙΛΟΓΕΣ ΣΟΥ</span><h1>Όπως σε βολεύει.</h1><p>Ρύθμισε τον στόχο σου και διαχειρίσου τον λογαριασμό και τις συνδέσεις σου.</p></div><div class="settings-grid"><div><section class="side-card"><h2>Ο λογαριασμός σου</h2><form id="account-profile-form" data-error-target="account-profile-error"><label>Όνομα<input name="name" value="${escape(state.session.user.name)}" autocomplete="given-name" minlength="2" maxlength="80" required></label><label>Email<input type="email" value="${escape(state.session.user.email)}" readonly></label><p id="account-profile-error" class="form-error" role="alert" hidden></p><button class="button button-primary" type="submit">Αποθήκευση ονόματος ${icon('check')}</button></form><p class="small-note">Αλλαγή email και ανάκτηση κωδικού μέσω email δεν είναι ακόμη διαθέσιμες.</p></section><section class="side-card"><h2>Η καθημερινή σου αρχή</h2><form id="settings-form"><label>Ημερήσιος στόχος<select name="goalMinutes">${[5,10,15].map(goal=>`<option value="${goal}" ${profile.goalMinutes===goal ? 'selected' : ''}>${goal} λεπτά</option>`).join('')}</select></label><p id="form-error" class="form-error" role="alert" hidden></p><button class="button button-primary" type="submit">Αποθήκευση στόχου ${icon('check')}</button></form><p class="small-note">Ο στόχος είναι προσωπική προτίμηση. Δεν μετράμε ακόμη ενεργά λεπτά μελέτης.</p></section><section class="side-card"><h2>Αλλαγή κωδικού</h2><form id="password-form" data-error-target="password-error"><label>Τρέχων κωδικός<input type="password" name="currentPassword" autocomplete="current-password" required maxlength="256"></label><label>Νέος κωδικός<input type="password" name="newPassword" autocomplete="new-password" required minlength="10" maxlength="256" placeholder="Τουλάχιστον 10 χαρακτήρες"></label><label>Επιβεβαίωση νέου κωδικού<input type="password" name="confirmPassword" autocomplete="new-password" required minlength="10" maxlength="256"></label><p id="password-error" class="form-error" role="alert" hidden></p><button class="button button-primary" type="submit">Αλλαγή κωδικού ${icon('lock')}</button></form><p class="small-note">Με την αλλαγή κωδικού αποσυνδέονται όλες οι άλλες συνδέσεις σου. Η τρέχουσα σύνδεση ανανεώνεται.</p></section><section id="account-sessions" class="side-card"><div class="section-heading"><h2>Ενεργές συνδέσεις</h2><button class="text-button" data-action="reload-sessions">Ανανέωση συνδέσεων</button></div><div id="account-session-list">${accountSessionList()}</div><button class="button button-outline settings-logout" data-action="logout">${icon('logout')} Αποσύνδεση από εδώ</button></section></div><div><section class="side-card"><h2>Η εμφάνισή σου</h2><label>Θέμα εφαρμογής<select id="theme-select"><option value="light">Φωτεινό</option><option value="dark" ${document.documentElement.dataset.theme === 'dark' ? 'selected' : ''}>Σκοτεινό</option></select></label><p class="small-note">Το θέμα αποθηκεύεται μόνο σε αυτόν τον browser. Οι ρυθμίσεις μειωμένης κίνησης της συσκευής σου εφαρμόζονται αυτόματα.</p>${installPrompt ? '<button class="button button-outline" data-action="install">Εγκατάσταση εφαρμογής</button>' : '<p class="small-note">Για εγκατάσταση, δες την επιλογή «Εγκατάσταση εφαρμογής» ή «Προσθήκη στην αρχική οθόνη» στο μενού του browser, εφόσον υποστηρίζεται.</p>'}</section><section class="side-card data-card"><h2>Τα δεδομένα σου</h2><p>Ο λογαριασμός και η πρόοδός σου αποθηκεύονται στη βάση δεδομένων αυτής της εγκατάστασης.</p><button class="button button-outline" data-action="export">${icon('download')} Εξαγωγή δεδομένων</button><button class="text-button danger-link" data-action="show-delete">Διαγραφή λογαριασμού</button><form id="delete-form" class="delete-form" hidden><p>Η διαγραφή αφαιρεί μόνιμα τον λογαριασμό και την πρόοδό σου από την ενεργή βάση. Δεν αναιρείται. Τυχόν αντίγραφα ασφαλείας χρειάζονται χωριστή πολιτική διατήρησης πριν από δημόσια χρήση.</p><label>Επιβεβαίωσε τον κωδικό σου<input type="password" name="password" autocomplete="current-password" required maxlength="256"></label><p id="delete-error" class="form-error" role="alert" hidden></p><button class="button button-danger" type="submit">Οριστική διαγραφή</button><button class="text-button" type="button" data-action="cancel-delete">Ακύρωση</button></form></section><section class="side-card settings-shortcuts"><h2>Περισσότερα για την εξάσκησή σου</h2><a class="text-link" href="#assessments">Δοκιμές γνώσεων ${icon('book')}</a><a class="text-link" href="#notifications">Ειδοποιήσεις και προτιμήσεις ${icon('bell')}</a><a class="text-link" href="#support">Τα αιτήματα υποστήριξής μου ${icon('help')}</a>${state.session.user.isAdmin === true ? '<a class="text-link" href="#admin">Διαχείριση εγκατάστασης</a>' : ''}</section><section class="side-card"><h2>Χρειάζεσαι βοήθεια;</h2><p>Δες πώς λειτουργεί η δοκιμή και τι ισχύει για τα δεδομένα σου.</p><a class="text-link" href="#help">Βοήθεια & απόρρητο ${icon('help')}</a></section></div></div></main>`);
 }
 function help() {
-  return shell(`<main id="main-content" class="page help-page ${!state.session?.user ? 'wrap' : ''}" tabindex="-1"><div class="page-intro"><span class="eyebrow">ΜΕ ΚΑΘΑΡΑ ΛΟΓΙΑ</span><h1>Μερικές χρήσιμες απαντήσεις.</h1><p>Τι μπορείς να δοκιμάσεις σήμερα και τι ετοιμάζουμε για αργότερα.</p></div><div class="help-grid"><section class="side-card"><h2>Η δοκιμαστική εφαρμογή</h2><details open><summary>Τι περιλαμβάνει;</summary><p>Εγγραφή ενηλίκων, επιλογή Ελληνικά → Αγγλικά, ${state.curriculum.lessons.length} μικρά μαθήματα A1, συνέχιση από την τελευταία αποθηκευμένη θέση, προγραμματισμένες επαναλήψεις, γραπτές ασκήσεις, προαιρετική φωνητική εισαγωγή και αποθήκευση προόδου στον λογαριασμό. Μπορείς να συνδεθείς από άλλον browser στην ίδια εγκατάσταση.</p></details><details><summary>Ο καθηγητής είναι πραγματικό AI;</summary><p>Οι εξηγήσεις μέσα στα οργανωμένα μαθήματα είναι προκαθορισμένες. Υπάρχει ξεχωριστή σελίδα καθηγητή AI που λειτουργεί μόνο αν ο ιδιοκτήτης συνδέσει διαθέσιμο τοπικό μοντέλο. Αν δεν υπάρχει, το δηλώνουμε καθαρά και τα μαθήματα συνεχίζουν κανονικά. Δεν υπάρχει συνεχής φωνητικός διάλογος ή αξιολόγηση προφοράς.</p></details><details><summary>Πώς λειτουργεί η φωνή;</summary><p>Το κουμπί ακρόασης χρησιμοποιεί τις διαθέσιμες φωνές της συσκευής ή του browser. Η αναγνώριση ομιλίας είναι προαιρετική και ζητά ξεχωριστή συγκατάθεση και άδεια μικροφώνου. Ο browser μπορεί να στείλει τον ήχο σε δικό του πάροχο. Δεν αποθηκεύουμε ήχο· η αναγνωρισμένη απάντηση γίνεται κείμενο. Δεν λειτουργεί σε όλους τους browsers και χρειάζεται ασφαλή σύνδεση ή localhost. Η πληκτρολόγηση παραμένει διαθέσιμη.</p></details><details><summary>Υπάρχει συνδρομή ή χρέωση;</summary><p>Δεν υπάρχουν ενεργές πληρωμές, δωρεάν δοκιμή με αυτόματη χρέωση ή συνδρομές σε αυτή την εγκατάσταση. Η δοκιμαστική εφαρμογή δεν ζητά κάρτα.</p></details><details><summary>Τι γίνεται χωρίς σύνδεση;</summary><p>Ορισμένα δημόσια αρχεία της εφαρμογής αποθηκεύονται προσωρινά στον browser. Η σύνδεση, τα μαθήματα και η αποθήκευση προόδου χρειάζονται διαθέσιμο διακομιστή. Αν χαθεί η σύνδεση στην ολοκλήρωση, κράτησε ανοιχτή τη σελίδα και ξαναδοκίμασε.</p></details></section><section class="side-card"><h2>Απόρρητο & λογαριασμός</h2><details open><summary>Ποια δεδομένα κρατά η εφαρμογή;</summary><p>Όνομα, email, προστατευμένη σύνοψη κωδικού, εκπαιδευτικές προτιμήσεις, ολοκληρωμένα μαθήματα, τελευταία αποθηκευμένη θέση και σωστές απαντήσεις εντός μαθήματος, πρόγραμμα επαναλήψεων και αποτελέσματα προσπαθειών επανάληψης, πόντοι και δραστηριότητα για τη σειρά ημερών. Μεταδεδομένα συνεδριών κρατούν την έναρξη, τελευταία χρήση και λήξη σύνδεσης. Η προαιρετική συζήτηση AI στέλνεται στο συνδεδεμένο τοπικό μοντέλο και δεν αποθηκεύεται στη βάση της εφαρμογής. Ένα απαραίτητο cookie κρατά τη σύνδεσή σου. Το θέμα αποθηκεύεται τοπικά. Δεν υπάρχουν analytics ή διαφημιστικά cookies.</p></details><details><summary>Πώς εξάγω ή διαγράφω τα δεδομένα μου;</summary><p>Από τις Ρυθμίσεις μπορείς να κατεβάσεις αντίγραφο δεδομένων σε JSON και να διαγράψεις τον λογαριασμό σου με επιβεβαίωση κωδικού. Η αποσύνδεση αφαιρεί τη συνεδρία του τρέχοντος browser. Μπορείς επίσης να αλλάξεις όνομα και κωδικό και να αποσυνδέσεις άλλες συνδέσεις από τις Ρυθμίσεις. Αλλαγή email και ανάκτηση κωδικού μέσω email δεν είναι ακόμη διαθέσιμες.</p></details><details><summary>Μπορούν να τη χρησιμοποιήσουν παιδιά;</summary><p>Η παρούσα δοκιμή προορίζεται μόνο για ενηλίκους 18+. Πριν υποστηριχθούν ανήλικοι απαιτούνται κατάλληλες γονικές διαδικασίες, νομικός έλεγχος και πρόσθετη προστασία.</p></details><details><summary>Ξέχασα τον κωδικό μου.</summary><p>Η αποστολή email και η ανάκτηση κωδικού δεν έχουν ενεργοποιηθεί. Μην χρησιμοποιείς αυτή τη δοκιμή για κρίσιμα δεδομένα ή κωδικό που χρησιμοποιείς αλλού. Η δημόσια διάθεση προϋποθέτει ολοκληρωμένες διαδικασίες λογαριασμού.</p></details><details><summary>Πώς αναφέρω ένα πρόβλημα;</summary><p>Δεν έχει οργανωθεί ακόμη ανθρώπινο τμήμα υποστήριξης. Κατέγραψε τη σελίδα, τα βήματα και το μήνυμα σφάλματος και στείλε τα στον ιδιοκτήτη της δοκιμής από το κανάλι που σου έδωσε πρόσβαση. Μην στέλνεις κωδικούς ή προσωπικές ηχογραφήσεις.</p></details><div class="info-box"><p>Η παρούσα ενημέρωση περιγράφει τη δοκιμή. Δεν αντικαθιστά ελεγμένη πολιτική απορρήτου, όρους χρήσης ή νομικό έλεγχο πριν από δημόσια κυκλοφορία.</p></div></section></div></main>`);
+  return shell(`<main id="main-content" class="page help-page ${!state.session?.user ? 'wrap' : ''}" tabindex="-1"><div class="page-intro"><span class="eyebrow">ΜΕ ΚΑΘΑΡΑ ΛΟΓΙΑ</span><h1>Μερικές χρήσιμες απαντήσεις.</h1><p>Τι μπορείς να δοκιμάσεις σήμερα και τι ετοιμάζουμε για αργότερα.</p></div><div class="help-grid"><section class="side-card"><h2>Η δοκιμαστική εφαρμογή</h2><details open><summary>Τι περιλαμβάνει;</summary><p>Εγγραφή ενηλίκων, επιλογή Ελληνικά → Αγγλικά, ${state.curriculum.lessons.length} μικρά μαθήματα A1, συνέχιση από την τελευταία αποθηκευμένη θέση, προγραμματισμένες επαναλήψεις, σύντομες δοκιμές εισαγωγικών γνώσεων, αιτήματα υποστήριξης, ειδοποιήσεις μέσα στην εφαρμογή, γραπτές ασκήσεις, προαιρετική φωνητική εισαγωγή και αποθήκευση προόδου στον λογαριασμό. Μπορείς να συνδεθείς από άλλον browser στην ίδια εγκατάσταση.</p></details><details><summary>Ο καθηγητής είναι πραγματικό AI;</summary><p>Οι εξηγήσεις μέσα στα οργανωμένα μαθήματα είναι προκαθορισμένες. Υπάρχει ξεχωριστή σελίδα καθηγητή AI που λειτουργεί μόνο αν ο ιδιοκτήτης συνδέσει διαθέσιμο τοπικό μοντέλο. Αν δεν υπάρχει, το δηλώνουμε καθαρά και τα μαθήματα συνεχίζουν κανονικά. Δεν υπάρχει συνεχής φωνητικός διάλογος ή αξιολόγηση προφοράς.</p></details><details><summary>Πώς λειτουργεί η φωνή;</summary><p>Το κουμπί ακρόασης χρησιμοποιεί τις διαθέσιμες φωνές της συσκευής ή του browser. Η αναγνώριση ομιλίας είναι προαιρετική και ζητά ξεχωριστή συγκατάθεση και άδεια μικροφώνου. Ο browser μπορεί να στείλει τον ήχο σε δικό του πάροχο. Δεν αποθηκεύουμε ήχο· η αναγνωρισμένη απάντηση γίνεται κείμενο. Δεν λειτουργεί σε όλους τους browsers και χρειάζεται ασφαλή σύνδεση ή localhost. Η πληκτρολόγηση παραμένει διαθέσιμη.</p></details><details><summary>Υπάρχει συνδρομή ή χρέωση;</summary><p>Δεν υπάρχουν ενεργές πληρωμές, δωρεάν δοκιμή με αυτόματη χρέωση ή συνδρομές σε αυτή την εγκατάσταση. Η δοκιμαστική εφαρμογή δεν ζητά κάρτα.</p></details><details><summary>Τι γίνεται χωρίς σύνδεση;</summary><p>Ορισμένα δημόσια αρχεία της εφαρμογής αποθηκεύονται προσωρινά στον browser. Η σύνδεση, τα μαθήματα και η αποθήκευση προόδου χρειάζονται διαθέσιμο διακομιστή. Αν χαθεί η σύνδεση στην ολοκλήρωση, κράτησε ανοιχτή τη σελίδα και ξαναδοκίμασε.</p></details></section><section class="side-card"><h2>Απόρρητο & λογαριασμός</h2><details open><summary>Ποια δεδομένα κρατά η εφαρμογή;</summary><p>Όνομα, email, προστατευμένη σύνοψη κωδικού, εκπαιδευτικές προτιμήσεις, ολοκληρωμένα μαθήματα, τελευταία αποθηκευμένη θέση και σωστές απαντήσεις εντός μαθήματος, πρόγραμμα επαναλήψεων και αποτελέσματα προσπαθειών επανάληψης, αποτελέσματα των δοκιμών γνώσεων, αιτήματα και μηνύματα υποστήριξης, ειδοποιήσεις και προτιμήσεις τους, πόντοι και δραστηριότητα για τη σειρά ημερών. Μεταδεδομένα συνεδριών κρατούν την έναρξη, τελευταία χρήση και λήξη σύνδεσης. Η προαιρετική συζήτηση AI στέλνεται στο συνδεδεμένο τοπικό μοντέλο και δεν αποθηκεύεται στη βάση της εφαρμογής. Ένα απαραίτητο cookie κρατά τη σύνδεσή σου. Το θέμα αποθηκεύεται τοπικά. Δεν υπάρχουν analytics ή διαφημιστικά cookies.</p></details><details><summary>Πώς εξάγω ή διαγράφω τα δεδομένα μου;</summary><p>Από τις Ρυθμίσεις μπορείς να κατεβάσεις αντίγραφο δεδομένων σε JSON και να διαγράψεις τον λογαριασμό σου με επιβεβαίωση κωδικού. Η αποσύνδεση αφαιρεί τη συνεδρία του τρέχοντος browser. Μπορείς επίσης να αλλάξεις όνομα και κωδικό και να αποσυνδέσεις άλλες συνδέσεις από τις Ρυθμίσεις. Αλλαγή email και ανάκτηση κωδικού μέσω email δεν είναι ακόμη διαθέσιμες.</p></details><details><summary>Μπορούν να τη χρησιμοποιήσουν παιδιά;</summary><p>Η παρούσα δοκιμή προορίζεται μόνο για ενηλίκους 18+. Πριν υποστηριχθούν ανήλικοι απαιτούνται κατάλληλες γονικές διαδικασίες, νομικός έλεγχος και πρόσθετη προστασία.</p></details><details><summary>Ξέχασα τον κωδικό μου.</summary><p>Η αποστολή email και η ανάκτηση κωδικού δεν έχουν ενεργοποιηθεί. Μην χρησιμοποιείς αυτή τη δοκιμή για κρίσιμα δεδομένα ή κωδικό που χρησιμοποιείς αλλού. Η δημόσια διάθεση προϋποθέτει ολοκληρωμένες διαδικασίες λογαριασμού.</p></details><details><summary>Πώς αναφέρω ένα πρόβλημα;</summary><p>Δεν έχει οργανωθεί ακόμη ανθρώπινο τμήμα υποστήριξης. Με σύνδεση στον λογαριασμό σου, μπορείς να καταγράψεις τη σελίδα, τα βήματα και το μήνυμα σφάλματος στα <a href="#support">αιτήματα υποστήριξης</a>. Αποθηκεύονται ιδιωτικά σε αυτή την εγκατάσταση. Δεν αποστέλλεται email και δεν υπάρχει εγγυημένος χρόνος απάντησης. Μην στέλνεις κωδικούς ή προσωπικές ηχογραφήσεις.</p></details><div class="info-box"><p>Η παρούσα ενημέρωση περιγράφει τη δοκιμή. Δεν αντικαθιστά ελεγμένη πολιτική απορρήτου, όρους χρήσης ή νομικό έλεγχο πριν από δημόσια κυκλοφορία.</p></div></section></div></main>`);
 }
 function render() {
   if (!state.session || !state.curriculum) return;
@@ -405,6 +677,11 @@ function render() {
   if (route !== 'review' && state.review) { state.review = null; reviewVisit++; }
   if (route !== 'settings' && accountSessions) { accountSessions=null; settingsVisit++; }
   if (route !== 'teacher' && state.teacher) { teacherVisit++; if (teacherController) { teacherController.abort(); teacherController=null; } state.teacher=null; }
+  if(route!=='assessments') state.assessment=null;
+  if(route!=='support' && !route.startsWith('support/')) state.support=null;
+  if(route!=='notifications') state.notifications=null;
+  if(route!=='admin') state.admin=null;
+  if(state.session.user && route!=='notifications') loadNotificationSummary();
   let content;
   if (route === 'home') content = landing();
   else if (['login','register'].includes(route)) content = auth(route);
@@ -414,14 +691,19 @@ function render() {
   else if (route === 'progress') content = progressView();
   else if (route === 'settings') content = settings();
   else if (route === 'teacher') content = teacherView();
+  else if (route === 'assessments') content = assessmentView();
+  else if (route === 'support' || route.startsWith('support/')) content = supportView();
+  else if (route === 'notifications') content = notificationsView();
+  else if (route === 'admin') content = adminView();
   else if (route === 'help') content = help();
   else if (route.startsWith('lesson/')) content = lessonView(route.split('/')[1]);
   else content = shell('<main class="page" id="main-content"><h1>Αυτή η σελίδα δεν βρέθηκε.</h1><a href="#home">Πίσω στην αρχή</a></main>');
   app.innerHTML = content;
+  updateNotificationBadge();
   const page = document.querySelector('#main-content');
   page?.focus({preventScroll:true});
   window.scrollTo({top:0,behavior:'instant'});
-  document.title = `${route.startsWith('lesson/') ? state.lesson?.title || 'Μάθημα' : ({dashboard:'Η διαδρομή μου',progress:'Η πρόοδός μου',settings:'Ρυθμίσεις',review:'Επαναλήψεις',teacher:'Καθηγητής AI',help:'Βοήθεια',login:'Σύνδεση',register:'Εγγραφή',onboarding:'Η δική σου αρχή'}[route] || 'Η δική σου νέα αρχή')} — AI Language Academy`;
+  document.title = `${route.startsWith('lesson/') ? state.lesson?.title || 'Μάθημα' : ({dashboard:'Η διαδρομή μου',progress:'Η πρόοδός μου',settings:'Ρυθμίσεις',review:'Επαναλήψεις',teacher:'Καθηγητής AI',assessments:'Δοκιμές γνώσεων',support:'Αιτήματα υποστήριξης',notifications:'Ειδοποιήσεις',admin:'Διαχείριση',help:'Βοήθεια',login:'Σύνδεση',register:'Εγγραφή',onboarding:'Η δική σου αρχή'}[route.split('/')[0]] || 'Η δική σου νέα αρχή')} — AI Language Academy`;
 }
 function speak(text,lang='en-GB') {
   if (!('speechSynthesis' in window)) { toast('Η ακρόαση δεν υποστηρίζεται σε αυτόν τον browser. Δες το γραπτό παράδειγμα.'); return; }
@@ -457,7 +739,7 @@ async function withBusy(form, callback) {
   busy = true;
   const button = form.querySelector('button[type="submit"],button[data-action="review-retry"]');
   if (button) { button.disabled = true; button.setAttribute('aria-busy','true'); }
-  try { await callback(); } catch(error) { formError(error,form.dataset.errorTarget || (form.id === 'delete-form' ? 'delete-error' : 'form-error')); }
+  try { await callback(); } catch(error) { if(form.isConnected) formError(error,form.dataset.errorTarget || (form.id === 'delete-form' ? 'delete-error' : 'form-error')); }
   finally { busy = false; if (button?.isConnected) { button.disabled = false; button.removeAttribute('aria-busy'); } }
 }
 app.addEventListener('submit', event => {
@@ -466,7 +748,20 @@ app.addEventListener('submit', event => {
   const data = Object.fromEntries(new FormData(form));
   if (form.id==='teacher-form') { sendTeacherMessage().catch(error=>formError(error,'teacher-error')); return; }
   withBusy(form, async () => {
-    if (form.id === 'account-profile-form') {
+    if(form.id==='assessment-form') {
+      await submitAssessment();
+    } else if(form.id==='support-create-form' || form.id==='support-reply-form') {
+      await saveSupport(form,data);
+    } else if(form.id==='notification-preferences-form') {
+      const view=state.notifications;
+      const prefs=await api('notifications/preferences',{method:'PUT',body:Object.fromEntries(['reminders','achievements','supportReplies'].map(key=>[key,data[key]==='on']))});
+      if(!featureMatches('notifications',view)) return;
+      view.preferences=prefs.preferences; view.error=null; render(); toast('Οι προτιμήσεις ειδοποιήσεων αποθηκεύτηκαν.');
+    } else if(form.id==='admin-lesson-form') {
+      await saveAdminDraft();
+    } else if(form.id==='admin-support-reply-form') {
+      await replyAdminSupport(data);
+    } else if (form.id === 'account-profile-form') {
       const userId=state.session.user.id,epoch=authEpoch;
       const session=await api('account/profile',{method:'PUT',body:{name:data.name}});
       if (!accountMatches(userId,epoch)) return;
@@ -503,6 +798,7 @@ app.addEventListener('submit', event => {
             if (state.session.user?.id !== userId) return;
             const stillInLesson = learningContext(id,visit,userId);
             state.session = session;
+            loadNotificationSummary(true);
             if (stillInLesson) state.phase='complete';
             render();
           } catch(error) {
@@ -542,7 +838,64 @@ app.addEventListener('click', async event => {
   const button = event.target.closest('[data-action]');
   if (!button || button.disabled) return;
   const action = button.dataset.action;
-  if (action === 'teacher-retry-status' || action === 'teacher-clear') { stopVoice(); beginTeacherStatus(action==='teacher-retry-status'); render(); }
+  if(action==='assessment-catalog') { if(!busy) { beginAssessmentLoad(); render(); } }
+  else if(action==='assessment-start') await startAssessment(button.dataset.kind,button.dataset.unitId,button);
+  else if(action==='assessment-back') {
+    const view=state.assessment;
+    if(busy || view.pending || view.index===0) return;
+    view.answers[view.index]=document.querySelector('#assessment-answer')?.value || ''; view.index--; view.error=null; render();
+  }
+  else if(action==='assessment-submit-retry') await featureAction(button,submitAssessment,'assessment-error');
+  else if(action==='assessment-last-result') {
+    const view=state.assessment,catalog=view.catalog;
+    const result=button.dataset.kind==='placement' ? catalog.diagnostic.lastResult : catalog.units.find(unit=>unit.id===button.dataset.unitId)?.lastResult;
+    if(result && !busy) { view.result=result; render(); }
+  }
+  else if(action==='support-refresh') { if(!busy) { beginSupportLoad(); render(); } }
+  else if(action==='support-status') await featureAction(button,()=>changeSupportStatus(button.dataset.status),'support-error');
+  else if(action==='notification-refresh') { if(!busy) { beginNotificationsLoad(); render(); } }
+  else if(action==='notification-read-all' || action==='notification-read') await featureAction(button,()=>readNotifications(button.dataset.notificationId),'notification-error');
+  else if(action==='admin-reload') { if(!busy) { beginAdminLoad(); render(); } }
+  else if(action==='admin-tab') {
+    if(busy) return;
+    const view=state.admin; view.tab=button.dataset.tab; view.error=null;
+    if(view.tab==='support') loadAdminSupport(view);
+    render();
+  }
+  else if(action==='admin-select') {
+    if(busy) return;
+    const record=state.admin.lessons.find(item=>item.id===button.dataset.lessonId);
+    if(record) { selectAdminLesson(state.admin,record); render(); }
+  }
+  else if(action==='admin-copy') {
+    if(busy) return;
+    const view=state.admin,record=view.lessons.find(item=>item.id===view.selectedId);
+    if(record) { selectAdminLesson(view,record,{copy:true}); render(); toast('Άλλαξε το πεδίο id του αντιγράφου σε ένα νέο, μοναδικό αναγνωριστικό.'); }
+  }
+  else if(action==='admin-new') {
+    if(busy) return;
+    const view=state.admin;
+    const phrases=[['Hello','Γεια σου'],['Goodbye','Αντίο'],['Thank you','Ευχαριστώ']];
+    const lesson={id:'new-lesson',title:'Μικρές καθημερινές φράσεις',subtitle:'Χαιρετισμοί και ευγένεια',durationMinutes:5,xp:30,objective:'Ο μαθητής εξασκείται σε τρεις μικρές καθημερινές φράσεις.',cards:phrases.map(([word,translation])=>({word,translation})),exercises:phrases.map(([answer,translation],index)=>({id:`phrase-${index+1}`,type:'translate',prompt:`Πώς λέμε «${translation}»;`,answer,acceptedAnswers:[answer],explanation:`${answer} σημαίνει ${translation.toLowerCase()}.`}))};
+    Object.assign(view,{creating:true,selectedId:null,editorJson:JSON.stringify(lesson,null,2),editorDirty:false,preview:null,error:null}); render();
+  }
+  else if(['admin-add-card','admin-add-exercise','admin-remove-card','admin-remove-exercise'].includes(action)) changeAdminRows(action,Number(button.dataset.rowIndex));
+  else if(action==='admin-sync-editor') {
+    if(busy) return;
+    try { parseAdminEditor(); state.admin.advancedOpen=true; state.admin.error=null; render(); } catch(error) { formError(error,'admin-error'); }
+  }
+  else if(action==='admin-preview') {
+    if(busy) return;
+    try { state.admin.preview=parseAdminEditor(); state.admin.error=null; render(); document.querySelector('#admin-preview')?.scrollIntoView({block:'start'}); }
+    catch(error) { formError(error,'admin-error'); }
+  }
+  else if(action==='admin-publish') await featureAction(button,publishAdminDraft,'admin-error');
+  else if(action==='admin-support-open') { loadAdminSupport(state.admin,button.dataset.ticketId); render(); }
+  else if(action==='admin-support-back') { loadAdminSupport(); render(); }
+  else if(action==='admin-support-prev' || action==='admin-support-next') {
+    const view=state.admin; view.supportOffset=Math.max(0,view.supportOffset+(action==='admin-support-prev' ? -20 : 20)); loadAdminSupport(view); render();
+  }
+  else if (action === 'teacher-retry-status' || action === 'teacher-clear') { stopVoice(); beginTeacherStatus(action==='teacher-retry-status'); render(); }
   else if (action === 'teacher-stop') stopTeacherWork();
   else if (action === 'teacher-mic') startMic(button,{inputId:'teacher-message',consentId:'teacher-mic-consent',lang:'el-GR'});
   else if (action === 'teacher-speak') { const message=state.teacher?.messages[Number(button.dataset.messageIndex)]; if (message?.role==='assistant') speak(message.content,'el-GR'); }
@@ -583,10 +936,19 @@ app.addEventListener('click', async event => {
   } else if (action === 'install' && installPrompt) { await installPrompt.prompt(); installPrompt=null; }
 });
 app.addEventListener('input',event=>{
+  if(event.target.hasAttribute('data-lesson-field') && state.admin && event.target.tagName!=='SELECT') changeAdminField(event.target);
+  if(event.target.id==='assessment-answer' && state.assessment && !state.assessment.pending) state.assessment.answers[state.assessment.index]=event.target.value;
+  if(event.target.id==='admin-lesson-json' && state.admin) {
+    state.admin.editorJson=event.target.value; state.admin.editorDirty=true; state.admin.preview=null; state.admin.advancedOpen=true;
+    const publish=document.querySelector('[data-action="admin-publish"]'); if(publish) publish.disabled=true;
+    const preview=document.querySelector('#admin-preview'); if(preview) preview.remove();
+  }
   if (event.target.id==='teacher-message' && state.teacher) state.teacher.draft=event.target.value;
   if (event.target.id==='review-answer' && state.review && !state.review.pending) state.review.answer=event.target.value;
 });
 app.addEventListener('change', event => {
+  if(event.target.hasAttribute('data-lesson-field') && state.admin && event.target.tagName==='SELECT') changeAdminField(event.target);
+  if(event.target.id==='admin-support-status' && state.admin) { state.admin.supportFilter=event.target.value; state.admin.supportOffset=0; loadAdminSupport(); render(); }
   if (event.target.id==='teacher-lesson' && state.teacher && !state.teacher.pending) { stopVoice(); Object.assign(state.teacher,{lessonId:event.target.value,messages:[],draft:'',board:null,error:null}); render(); }
   if (event.target.id==='teacher-consent' && state.teacher) { state.teacher.consent=event.target.checked; const submit=document.querySelector('#teacher-form button[type=submit]'); if (submit) submit.disabled=!state.teacher.consent || !state.teacher.status?.available || state.teacher.pending; }
   if (event.target.id==='teacher-mic-consent' && state.teacher) { state.teacher.micConsent=event.target.checked; if (!state.teacher.micConsent) stopVoice(); }

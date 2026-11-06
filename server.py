@@ -22,6 +22,10 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from app_errors import ServiceError
+from assessment import AssessmentService
+from content_admin import ContentAdminService
+from support import SupportService
 from teacher import TeacherError, TeacherService
 
 ROOT = Path(__file__).resolve().parent
@@ -86,9 +90,8 @@ def answer_matches(answer, exercise) -> bool:
                     for expected in accepted_answers(exercise) if isinstance(expected, str)))
 
 
-class APIError(Exception):
-    def __init__(self, status: int, message: str):
-        self.status, self.message = status, message
+class APIError(ServiceError):
+    """HTTP-side validation error, sharing the feature services' safe error format."""
 
 
 class AcademyServer(ThreadingHTTPServer):
@@ -102,6 +105,9 @@ class AcademyServer(ThreadingHTTPServer):
         self.auth_attempts: dict[str, list[float]] = {}
         self.dummy_password = password_hash(secrets.token_urlsafe(32))
         self.teacher = TeacherService.from_env()
+        self.content = ContentAdminService(self.db, self.root, self.base_curriculum)
+        self.assessments = AssessmentService(self.db, self.curriculum, answer_matches)
+        self.support = SupportService(self.db)
         self.db_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.initialize_db()
         super().__init__(address, AcademyHandler)
@@ -118,7 +124,8 @@ class AcademyServer(ThreadingHTTPServer):
                 PRAGMA journal_mode=WAL;
                 CREATE TABLE IF NOT EXISTS users (
                     id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL,
-                    password_hash TEXT NOT NULL, created_at TEXT NOT NULL
+                    password_hash TEXT NOT NULL, created_at TEXT NOT NULL,
+                    role TEXT NOT NULL DEFAULT 'student' CHECK(role IN ('student','admin'))
                 );
                 CREATE TABLE IF NOT EXISTS profiles (
                     user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -157,6 +164,9 @@ class AcademyServer(ThreadingHTTPServer):
                     PRIMARY KEY(user_id, attempt_id)
                 );
             """)
+            user_columns = {row["name"] for row in db.execute("PRAGMA table_info(users)")}
+            if "role" not in user_columns:
+                db.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'student' CHECK(role IN ('student','admin'))")
             # Retain legacy cookies while adding independent, non-secret device IDs.
             columns = {row["name"] for row in db.execute("PRAGMA table_info(sessions)")}
             for column in ("public_id", "created_at", "last_seen_at"):
@@ -169,25 +179,32 @@ class AcademyServer(ThreadingHTTPServer):
                            (row["public_id"] or secrets.token_urlsafe(18), created_at,
                             row["last_seen_at"] or created_at, row["token_hash"]))
             db.execute("CREATE UNIQUE INDEX IF NOT EXISTS sessions_public_id ON sessions(public_id)")
+            self.content.initialize(db)
+            self.assessments.initialize(db)
+            self.support.initialize(db)
+            self.content.install_usage_guards(db)
             # Upgrade existing pilot databases without changing their users or XP.
             completions = db.execute("SELECT user_id,lesson_id,completed_at FROM completions").fetchall()
             if completions:
-                lessons = {lesson["id"]: lesson for lesson in self.lessons()}
+                lessons = {lesson["id"]: lesson for lesson in self.lessons(db=db)}
                 for completion in completions:
                     lesson = lessons.get(completion["lesson_id"])
                     if lesson:
                         self.seed_reviews(db, completion["user_id"], lesson, completion["completed_at"])
         os.chmod(self.db_path, 0o600)
 
-    def curriculum(self):
+    def base_curriculum(self):
         path = self.root / "data" / "curriculum.json"
         try:
             return json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             raise APIError(503, "Το εκπαιδευτικό υλικό δεν είναι διαθέσιμο.") from exc
 
-    def lessons(self):
-        curriculum = self.curriculum()
+    def curriculum(self, db=None):
+        return self.content.public_curriculum(self.base_curriculum(), db=db)
+
+    def lessons(self, db=None):
+        curriculum = self.curriculum(db=db)
         return curriculum.get("lessons", []) if isinstance(curriculum, dict) else curriculum
 
     def exercise_map(self, lesson):
@@ -286,7 +303,7 @@ class AcademyHandler(BaseHTTPRequestHandler):
                 self.static(path)
             else:
                 raise APIError(405, "Η μέθοδος δεν υποστηρίζεται.")
-        except APIError as exc:
+        except ServiceError as exc:
             self.json_response(exc.status, {"error": exc.message})
         except TeacherError as exc:
             self.json_response(exc.status, {"error": exc.message})
@@ -360,6 +377,11 @@ class AcademyHandler(BaseHTTPRequestHandler):
             raise APIError(401, "Χρειάζεται να συνδεθείς πρώτα.")
         return session["user_id"]
 
+    def require_admin(self, db, user_id):
+        user = db.execute("SELECT role FROM users WHERE id=?", (user_id,)).fetchone()
+        if not user or user["role"] != "admin":
+            raise APIError(403, "Απαιτείται πρόσβαση διαχειριστή.")
+
     def protect_mutation(self, session, data):
         origin = self.headers.get("Origin")
         if self.headers.get("Sec-Fetch-Site") == "cross-site":
@@ -374,7 +396,7 @@ class AcademyHandler(BaseHTTPRequestHandler):
 
     def payload(self, db, session):
         user_id = session["user_id"]
-        user = db.execute("SELECT id,name,email FROM users WHERE id=?", (user_id,)).fetchone() if user_id else None
+        user = db.execute("SELECT id,name,email,role FROM users WHERE id=?", (user_id,)).fetchone() if user_id else None
         profile = db.execute("SELECT data FROM profiles WHERE user_id=?", (user_id,)).fetchone() if user_id else None
         completions = db.execute("SELECT lesson_id,xp,completed_at FROM completions WHERE user_id=? ORDER BY completed_at", (user_id,)).fetchall() if user_id else []
         activities = db.execute("SELECT day FROM activities WHERE user_id=? ORDER BY day DESC", (user_id,)).fetchall() if user_id else []
@@ -385,7 +407,8 @@ class AcademyHandler(BaseHTTPRequestHandler):
         while cursor.isoformat() in days:
             streak += 1
             cursor -= timedelta(days=1)
-        return {"user": dict(user) if user else None,
+        return {"user": {"id": user["id"], "name": user["name"], "email": user["email"],
+                         "isAdmin": user["role"] == "admin"} if user else None,
                 "profile": json.loads(profile["data"]) if profile else None,
                 "progress": {"completedLessons": [r["lesson_id"] for r in completions],
                              "xp": sum(r["xp"] for r in completions), "streak": streak,
@@ -430,6 +453,12 @@ class AcademyHandler(BaseHTTPRequestHandler):
                 session = self.session(db)
                 self.require_user(session)
                 result = self.server.teacher.status()
+            elif method == "GET" and self.feature_route(path):
+                session = self.session(db)
+                user_id = self.require_user(session)
+                if path.startswith("/api/admin/"):
+                    self.require_admin(db, user_id)
+                result = self.feature_response(method, path, user_id)
             elif method == "GET" and path == "/api/export":
                 session = self.session(db)
                 user_id = self.require_user(session)
@@ -445,6 +474,8 @@ class AcademyHandler(BaseHTTPRequestHandler):
                                              "exerciseId": r["exercise_id"], "result": json.loads(r["result"]),
                                              "createdAt": r["created_at"]}
                                             for r in db.execute("SELECT * FROM review_attempts WHERE user_id=? ORDER BY created_at", (user_id,))]
+                result.update(self.server.assessments.export(user_id, db=db))
+                result.update(self.server.support.export_data(db, user_id))
                 response_headers = {"Content-Disposition": 'attachment; filename="academy-data.json"'}
             elif method in ("POST", "PUT", "DELETE"):
                 data = self.body()
@@ -457,6 +488,43 @@ class AcademyHandler(BaseHTTPRequestHandler):
             if method == "GET" and path in ("/api/account/sessions", "/api/export"):
                 result["sessions"] = self.session_metadata(db, session)
         self.json_response(200, result, response_headers)
+
+    @staticmethod
+    def feature_route(path):
+        return (path.startswith("/api/admin/") or path == "/api/assessments"
+                or path.startswith("/api/assessments/") or path == "/api/support"
+                or path.startswith("/api/support/") or path == "/api/notifications"
+                or path.startswith("/api/notifications/"))
+
+    def feature_response(self, method, path, user_id, data=None):
+        # The CSRF token belongs to the HTTP transport, not to feature schemas.
+        # In particular curriculum drafts reject all unrecognized fields.
+        if data is not None:
+            data = {key: value for key, value in data.items() if key != "csrfToken"}
+        if method == "GET" and path == "/api/admin/overview":
+            return self.server.content.overview(user_id)
+        if method == "GET" and path == "/api/admin/curriculum":
+            return self.server.content.list_curriculum(user_id)
+        if method == "POST" and path == "/api/admin/lessons":
+            return self.server.content.save_draft(user_id, None, data, create=True)
+        content_path = re.fullmatch(r"/api/admin/lessons/([^/]+)(/publish)?", path)
+        if content_path:
+            lesson_id = unquote(content_path.group(1))
+            if method == "PUT" and not content_path.group(2):
+                return self.server.content.save_draft(user_id, lesson_id, data)
+            if method == "POST" and content_path.group(2):
+                return self.server.content.publish(user_id, lesson_id, data)
+        if method == "GET" and path == "/api/assessments":
+            return self.server.assessments.list(user_id)
+        if method == "POST" and path == "/api/assessments/start":
+            return self.server.assessments.start(user_id, data)
+        if method == "POST" and path == "/api/assessments/submit":
+            return self.server.assessments.submit(user_id, data)
+        query = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
+        result = self.server.support.handle(method, path, user_id, data=data, query=query)
+        if result is None:
+            raise APIError(404, "Η διαδρομή δεν βρέθηκε.")
+        return result
 
     def mutate(self, db, session, method, path, data):
         if method == "POST" and path in ("/api/register", "/api/login"):
@@ -476,7 +544,7 @@ class AcademyHandler(BaseHTTPRequestHandler):
                     raise APIError(400, "Η δοκιμαστική έκδοση απευθύνεται μόνο σε ενηλίκους 18+.")
                 user_id = secrets.token_hex(16)
                 try:
-                    db.execute("INSERT INTO users VALUES(?,?,?,?,?)", (user_id, name.strip(), email, password_hash(password), now_iso()))
+                    db.execute("INSERT INTO users(id,name,email,password_hash,created_at) VALUES(?,?,?,?,?)", (user_id, name.strip(), email, password_hash(password), now_iso()))
                 except sqlite3.IntegrityError:
                     raise APIError(409, "Δεν ήταν δυνατή η εγγραφή με αυτά τα στοιχεία. Δοκίμασε σύνδεση.")
             else:
@@ -491,8 +559,12 @@ class AcademyHandler(BaseHTTPRequestHandler):
             session = self.new_session(db, old_hash=session["token_hash"])
             return self.payload(db, session)
         user_id = self.require_user(session)
+        if self.feature_route(path):
+            if path.startswith("/api/admin/"):
+                self.require_admin(db, user_id)
+            return self.feature_response(method, path, user_id, data)
         if method == "POST" and path == "/api/teacher":
-            return self.server.teacher.reply(user_id, data, self.server.curriculum())
+            return self.server.teacher.reply(user_id, data, self.server.curriculum(db=db))
         if method == "PUT" and path == "/api/account/profile":
             name = data.get("name")
             if not isinstance(name, str) or not 2 <= len(name.strip()) <= 80:
@@ -584,6 +656,7 @@ class AcademyHandler(BaseHTTPRequestHandler):
         inserted = db.execute("INSERT OR IGNORE INTO completions VALUES(?,?,?,?)", (user_id, lesson_id, xp, completed_at)).rowcount
         if inserted:
             self.server.seed_reviews(db, user_id, lesson, completed_at)
+            self.server.support.notify_completion(db, user_id, lesson)
         db.execute("DELETE FROM lesson_checkpoints WHERE user_id=? AND lesson_id=?", (user_id, lesson_id))
         db.execute("INSERT OR IGNORE INTO activities VALUES(?,?)", (user_id, activity_day().isoformat()))
         return self.payload(db, session)
@@ -591,7 +664,7 @@ class AcademyHandler(BaseHTTPRequestHandler):
     def find_lesson(self, db, user_id, lesson_id, learned=False):
         if not isinstance(lesson_id, str) or not 1 <= len(lesson_id) <= 128:
             raise APIError(400, "Μη έγκυρο μάθημα.")
-        lessons = self.server.lessons()
+        lessons = self.server.lessons(db=db)
         lesson = next((item for item in lessons if item.get("id") == lesson_id), None)
         if not lesson:
             raise APIError(404, "Το μάθημα δεν βρέθηκε.")
@@ -634,7 +707,7 @@ class AcademyHandler(BaseHTTPRequestHandler):
         return {"checkpoint": self.checkpoint_payload(row)}
 
     def review_payload(self, db, user_id):
-        lessons = {lesson["id"]: lesson for lesson in self.server.lessons()}
+        lessons = {lesson["id"]: lesson for lesson in self.server.lessons(db=db)}
         current = utc_now()
         items = []
         rows = db.execute("""SELECT r.* FROM review_cards r JOIN completions c
