@@ -1,44 +1,218 @@
 {
   "version": 1,
-  "course": {"id":"el-en-a1","nativeLanguage":"el","targetLanguage":"en","level":"A1"},
+  "course": {
+    "id": "el-en-a1",
+    "nativeLanguage": "el",
+    "targetLanguage": "en",
+    "level": "A1"
+  },
   "lessons": [
     {
-      "id":"first-words","title":"Οι πρώτες σου λέξεις","subtitle":"Μικρές λέξεις, μια μεγάλη αρχή","durationMinutes":5,"xp":30,"objective":"Αναγνωρίζω και γράφω τρεις καθημερινές αγγλικές λέξεις.",
-      "cards":[
-        {"word":"car","translation":"αυτοκίνητο","pronunciation":"καρ","example":"This is a car.","exampleTranslation":"Αυτό είναι ένα αυτοκίνητο.","image":"/assets/car.svg"},
-        {"word":"book","translation":"βιβλίο","pronunciation":"μπουκ","example":"This is a book.","exampleTranslation":"Αυτό είναι ένα βιβλίο.","image":"/assets/book.svg"},
-        {"word":"apple","translation":"μήλο","pronunciation":"άπλ","example":"This is an apple.","exampleTranslation":"Αυτό είναι ένα μήλο.","image":"/assets/apple.svg"}
+      "id": "first-words",
+      "title": "Οι πρώτες σου λέξεις",
+      "subtitle": "Μικρές λέξεις, μια μεγάλη αρχή",
+      "durationMinutes": 5,
+      "xp": 30,
+      "objective": "Αναγνωρίζω και γράφω τρεις καθημερινές αγγλικές λέξεις.",
+      "cards": [
+        {
+          "word": "car",
+          "translation": "αυτοκίνητο",
+          "pronunciation": "καρ",
+          "example": "This is a car.",
+          "exampleTranslation": "Αυτό είναι ένα αυτοκίνητο.",
+          "image": "/assets/car.svg"
+        },
+        {
+          "word": "book",
+          "translation": "βιβλίο",
+          "pronunciation": "μπουκ",
+          "example": "This is a book.",
+          "exampleTranslation": "Αυτό είναι ένα βιβλίο.",
+          "image": "/assets/book.svg"
+        },
+        {
+          "word": "apple",
+          "translation": "μήλο",
+          "pronunciation": "άπλ",
+          "example": "This is an apple.",
+          "exampleTranslation": "Αυτό είναι ένα μήλο.",
+          "image": "/assets/apple.svg"
+        }
       ],
-      "exercises":[
-        {"id":"car","type":"translate","prompt":"Πώς λέμε «αυτοκίνητο» στα αγγλικά;","answer":"car","acceptedAnswers":["car","a car"],"explanation":"Το αυτοκίνητο λέγεται car. Το a car σημαίνει ένα αυτοκίνητο.","hint":"Αρχίζει από c και έχει 3 γράμματα."},
-        {"id":"book","type":"translate","prompt":"Πώς λέμε «βιβλίο» στα αγγλικά;","answer":"book","acceptedAnswers":["book","a book"],"explanation":"Το βιβλίο λέγεται book. Τα δύο o ακούγονται περίπου σαν σύντομο «ου».","hint":"Αρχίζει από b και έχει δύο o."},
-        {"id":"apple","type":"translate","prompt":"Πώς λέμε «μήλο» στα αγγλικά;","answer":"apple","acceptedAnswers":["apple","an apple"],"explanation":"Το μήλο λέγεται apple. Λέμε an apple, γιατί η λέξη αρχίζει από φωνηεντικό ήχο.","hint":"Αρχίζει από a και έχει δύο p."}
+      "exercises": [
+        {
+          "id": "car",
+          "type": "translate",
+          "prompt": "Πώς λέμε «αυτοκίνητο» στα αγγλικά;",
+          "answer": "car",
+          "acceptedAnswers": [
+            "car",
+            "a car"
+          ],
+          "explanation": "Το αυτοκίνητο λέγεται car. Το a car σημαίνει ένα αυτοκίνητο.",
+          "hint": "Αρχίζει από c και έχει 3 γράμματα."
+        },
+        {
+          "id": "book",
+          "type": "translate",
+          "prompt": "Πώς λέμε «βιβλίο» στα αγγλικά;",
+          "answer": "book",
+          "acceptedAnswers": [
+            "book",
+            "a book"
+          ],
+          "explanation": "Το βιβλίο λέγεται book. Τα δύο o ακούγονται περίπου σαν σύντομο «ου».",
+          "hint": "Αρχίζει από b και έχει δύο o."
+        },
+        {
+          "id": "apple",
+          "type": "translate",
+          "prompt": "Πώς λέμε «μήλο» στα αγγλικά;",
+          "answer": "apple",
+          "acceptedAnswers": [
+            "apple",
+            "an apple"
+          ],
+          "explanation": "Το μήλο λέγεται apple. Λέμε an apple, γιατί η λέξη αρχίζει από φωνηεντικό ήχο.",
+          "hint": "Αρχίζει από a και έχει δύο p."
+        }
       ]
     },
     {
-      "id":"greetings","title":"Χαίρομαι που σε γνωρίζω","subtitle":"Η πρώτη σου μικρή συζήτηση","durationMinutes":5,"xp":30,"objective":"Χαιρετώ, ευχαριστώ και συστήνομαι στα αγγλικά.",
-      "cards":[
-        {"word":"Hello!","translation":"Γεια σου!","pronunciation":"χελόου","example":"Hello! My name is Alex.","exampleTranslation":"Γεια σου! Με λένε Άλεξ."},
-        {"word":"Thank you!","translation":"Ευχαριστώ!","pronunciation":"θενκ γιου","example":"Thank you for your help.","exampleTranslation":"Ευχαριστώ για τη βοήθειά σου."},
-        {"word":"My name is…","translation":"Με λένε…","pronunciation":"μάι νέιμ ιζ","example":"My name is Maria.","exampleTranslation":"Με λένε Μαρία."}
+      "id": "greetings",
+      "title": "Χαίρομαι που σε γνωρίζω",
+      "subtitle": "Η πρώτη σου μικρή συζήτηση",
+      "durationMinutes": 5,
+      "xp": 30,
+      "objective": "Χαιρετώ, ευχαριστώ και συστήνομαι στα αγγλικά.",
+      "cards": [
+        {
+          "word": "Hello!",
+          "translation": "Γεια σου!",
+          "pronunciation": "χελόου",
+          "example": "Hello! My name is Alex.",
+          "exampleTranslation": "Γεια σου! Με λένε Άλεξ."
+        },
+        {
+          "word": "Thank you!",
+          "translation": "Ευχαριστώ!",
+          "pronunciation": "θενκ γιου",
+          "example": "Thank you for your help.",
+          "exampleTranslation": "Ευχαριστώ για τη βοήθειά σου."
+        },
+        {
+          "word": "My name is…",
+          "translation": "Με λένε…",
+          "pronunciation": "μάι νέιμ ιζ",
+          "example": "My name is Maria.",
+          "exampleTranslation": "Με λένε Μαρία."
+        }
       ],
-      "exercises":[
-        {"id":"hello","type":"translate","prompt":"Χαιρέτησε κάποιον με ένα «Γεια σου» στα αγγλικά.","answer":"hello","acceptedAnswers":["hello","hi"],"explanation":"Μπορείς να πεις Hello ή το πιο ανεπίσημο Hi.","hint":"Η λέξη αρχίζει από h."},
-        {"id":"thanks","type":"translate","prompt":"Πώς λέμε «Ευχαριστώ»;","answer":"thank you","acceptedAnswers":["thank you","thanks"],"explanation":"Thank you σημαίνει ευχαριστώ. Το Thanks είναι πιο ανεπίσημο.","hint":"Δύο λέξεις: Thank …"},
-        {"id":"name","type":"gap","prompt":"Συμπλήρωσε μόνο τη λέξη που λείπει: My ___ is Maria.","answer":"name","acceptedAnswers":["name"],"explanation":"My name is Maria σημαίνει Με λένε Μαρία. Η λέξη name σημαίνει όνομα.","hint":"Σημαίνει «όνομα»."}
+      "exercises": [
+        {
+          "id": "hello",
+          "type": "translate",
+          "prompt": "Χαιρέτησε κάποιον με ένα «Γεια σου» στα αγγλικά.",
+          "answer": "hello",
+          "acceptedAnswers": [
+            "hello",
+            "hi"
+          ],
+          "explanation": "Μπορείς να πεις Hello ή το πιο ανεπίσημο Hi.",
+          "hint": "Η λέξη αρχίζει από h."
+        },
+        {
+          "id": "thanks",
+          "type": "translate",
+          "prompt": "Πώς λέμε «Ευχαριστώ»;",
+          "answer": "thank you",
+          "acceptedAnswers": [
+            "thank you",
+            "thanks"
+          ],
+          "explanation": "Thank you σημαίνει ευχαριστώ. Το Thanks είναι πιο ανεπίσημο.",
+          "hint": "Δύο λέξεις: Thank …"
+        },
+        {
+          "id": "name",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε μόνο τη λέξη που λείπει: My ___ is Maria.",
+          "answer": "name",
+          "acceptedAnswers": [
+            "name"
+          ],
+          "explanation": "My name is Maria σημαίνει Με λένε Μαρία. Η λέξη name σημαίνει όνομα.",
+          "hint": "Σημαίνει «όνομα»."
+        }
       ]
     },
     {
-      "id":"simple-sentences","title":"Μια ολόκληρη πρόταση","subtitle":"Βάζουμε τις λέξεις στη σειρά","durationMinutes":7,"xp":40,"objective":"Χρησιμοποιώ το I am και διαλέγω σωστά a ή an σε απλές προτάσεις.",
-      "cards":[
-        {"word":"I am a student.","translation":"Είμαι μαθητής / μαθήτρια.","pronunciation":"άι αμ ε στιούντεντ","example":"I am a student.","exampleTranslation":"Το I σημαίνει εγώ και το am σημαίνει είμαι."},
-        {"word":"This is a book.","translation":"Αυτό είναι ένα βιβλίο.","pronunciation":"δις ιζ ε μπουκ","example":"This is a car.","exampleTranslation":"Χρησιμοποιούμε a πριν από σύμφωνο ήχο.","image":"/assets/book.svg"},
-        {"word":"This is an apple.","translation":"Αυτό είναι ένα μήλο.","pronunciation":"δις ιζ εν άπλ","example":"This is an apple.","exampleTranslation":"Χρησιμοποιούμε an πριν από φωνηεντικό ήχο.","image":"/assets/apple.svg"}
+      "id": "simple-sentences",
+      "title": "Μια ολόκληρη πρόταση",
+      "subtitle": "Βάζουμε τις λέξεις στη σειρά",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Χρησιμοποιώ το I am και διαλέγω σωστά a ή an σε απλές προτάσεις.",
+      "cards": [
+        {
+          "word": "I am a student.",
+          "translation": "Είμαι μαθητής / μαθήτρια.",
+          "pronunciation": "άι αμ ε στιούντεντ",
+          "example": "I am a student.",
+          "exampleTranslation": "Το I σημαίνει εγώ και το am σημαίνει είμαι."
+        },
+        {
+          "word": "This is a book.",
+          "translation": "Αυτό είναι ένα βιβλίο.",
+          "pronunciation": "δις ιζ ε μπουκ",
+          "example": "This is a car.",
+          "exampleTranslation": "Χρησιμοποιούμε a πριν από σύμφωνο ήχο.",
+          "image": "/assets/book.svg"
+        },
+        {
+          "word": "This is an apple.",
+          "translation": "Αυτό είναι ένα μήλο.",
+          "pronunciation": "δις ιζ εν άπλ",
+          "example": "This is an apple.",
+          "exampleTranslation": "Χρησιμοποιούμε an πριν από φωνηεντικό ήχο.",
+          "image": "/assets/apple.svg"
+        }
       ],
-      "exercises":[
-        {"id":"am","type":"gap","prompt":"Συμπλήρωσε μόνο τη λέξη που λείπει: I ___ a student.","answer":"am","acceptedAnswers":["am"],"explanation":"Με το I χρησιμοποιούμε am: I am a student. Σημαίνει Είμαι μαθητής / μαθήτρια.","hint":"Το «είμαι» μετά το I έχει δύο γράμματα."},
-        {"id":"an","type":"gap","prompt":"Συμπλήρωσε a ή an: This is ___ apple.","answer":"an","acceptedAnswers":["an"],"explanation":"Το apple αρχίζει από φωνηεντικό ήχο, γι’ αυτό χρησιμοποιούμε an.","hint":"Η λέξη apple αρχίζει από φωνηεντικό ήχο."},
-        {"id":"a","type":"gap","prompt":"Συμπλήρωσε a ή an: This is ___ book.","answer":"a","acceptedAnswers":["a"],"explanation":"Το book αρχίζει από σύμφωνο ήχο, γι’ αυτό χρησιμοποιούμε a.","hint":"Η λέξη book αρχίζει από σύμφωνο ήχο."}
+      "exercises": [
+        {
+          "id": "am",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε μόνο τη λέξη που λείπει: I ___ a student.",
+          "answer": "am",
+          "acceptedAnswers": [
+            "am"
+          ],
+          "explanation": "Με το I χρησιμοποιούμε am: I am a student. Σημαίνει Είμαι μαθητής / μαθήτρια.",
+          "hint": "Το «είμαι» μετά το I έχει δύο γράμματα."
+        },
+        {
+          "id": "an",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε a ή an: This is ___ apple.",
+          "answer": "an",
+          "acceptedAnswers": [
+            "an"
+          ],
+          "explanation": "Το apple αρχίζει από φωνηεντικό ήχο, γι’ αυτό χρησιμοποιούμε an.",
+          "hint": "Η λέξη apple αρχίζει από φωνηεντικό ήχο."
+        },
+        {
+          "id": "a",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε a ή an: This is ___ book.",
+          "answer": "a",
+          "acceptedAnswers": [
+            "a"
+          ],
+          "explanation": "Το book αρχίζει από σύμφωνο ήχο, γι’ αυτό χρησιμοποιούμε a.",
+          "hint": "Η λέξη book αρχίζει από σύμφωνο ήχο."
+        }
       ]
     },
     {
@@ -502,6 +676,1305 @@
           "explanation": "Στον κατάλογο γράφει Coffee: three euros. Ο καφές κοστίζει τρία ευρώ. Απάντησε three ή 3.",
           "hint": "Δες τη γραμμή Coffee.",
           "passage": "Tea: two euros.\nCoffee: three euros."
+        }
+      ]
+    },
+    {
+      "id": "family-members",
+      "title": "Η οικογένειά μου",
+      "subtitle": "Γνωρίζουμε τους δικούς μας ανθρώπους",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Ονομάζω βασικά μέλη της οικογένειας και καταλαβαίνω μια απλή σύσταση.",
+      "cards": [
+        {
+          "word": "mother · father",
+          "translation": "μητέρα · πατέρας",
+          "example": "This is my mother.",
+          "exampleTranslation": "Αυτή είναι η μητέρα μου. Mother σημαίνει μητέρα και father πατέρας. Το my σημαίνει μου."
+        },
+        {
+          "word": "sister",
+          "translation": "αδελφή",
+          "example": "This is my sister.",
+          "exampleTranslation": "Αυτή είναι η αδελφή μου. Το sister αναφέρεται σε αδελφή."
+        },
+        {
+          "word": "brother",
+          "translation": "αδελφός",
+          "example": "This is my brother.",
+          "exampleTranslation": "Αυτός είναι ο αδελφός μου. Το brother αναφέρεται σε αδελφό."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "choose-father",
+          "type": "multiple-choice",
+          "prompt": "Ποια αγγλική λέξη σημαίνει «πατέρας»;",
+          "answer": "father",
+          "acceptedAnswers": [
+            "father"
+          ],
+          "explanation": "Father σημαίνει πατέρας. Mother σημαίνει μητέρα και sister αδελφή.",
+          "choices": [
+            "mother",
+            "father",
+            "sister"
+          ]
+        },
+        {
+          "id": "introduce-sister",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Αυτή είναι η αδελφή μου».",
+          "answer": "This is my sister",
+          "acceptedAnswers": [
+            "This is my sister"
+          ],
+          "explanation": "Λέμε This is my sister. Το my μπαίνει πριν από το sister, όχι μετά.",
+          "tokens": [
+            "sister",
+            "my",
+            "This",
+            "is"
+          ]
+        },
+        {
+          "id": "hear-brother",
+          "type": "listening",
+          "prompt": "Άκου τη σύσταση. Ποιο μέλος της οικογένειας αναφέρεται; Γράψε μόνο την αγγλική λέξη.",
+          "answer": "brother",
+          "acceptedAnswers": [
+            "brother"
+          ],
+          "explanation": "Ακούγεται This is my brother: Αυτός είναι ο αδελφός μου. Η λέξη που ζητείται είναι brother.",
+          "audioText": "This is my brother."
+        }
+      ]
+    },
+    {
+      "id": "possessive-words",
+      "title": "Σε ποιον ανήκει;",
+      "subtitle": "My, your, his και her πριν από το όνομα",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Χρησιμοποιώ my, your, his και her για να δείξω σε ποιον ανήκει κάτι.",
+      "cards": [
+        {
+          "word": "my · your",
+          "translation": "μου · σου / σας",
+          "example": "My book is here. Your book is there.",
+          "exampleTranslation": "Το βιβλίο μου είναι εδώ. Το βιβλίο σου είναι εκεί. Τα my και your μπαίνουν πριν από το ουσιαστικό και δεν αλλάζουν ανάλογα με το γένος του."
+        },
+        {
+          "word": "his",
+          "translation": "του, όταν μιλάμε για άνδρα ή αγόρι",
+          "example": "This is his book.",
+          "exampleTranslation": "Αυτό είναι το βιβλίο του. Το his αναφέρεται στο πρόσωπο που έχει το βιβλίο, όχι στο γένος της ελληνικής λέξης βιβλίο."
+        },
+        {
+          "word": "her",
+          "translation": "της, όταν μιλάμε για γυναίκα ή κορίτσι",
+          "example": "This is her book.",
+          "exampleTranslation": "Αυτό είναι το βιβλίο της. Χρησιμοποιούμε her για την ιδιοκτήτρια και his για τον ιδιοκτήτη."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "my-book",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε μόνο τη λέξη που λείπει: «This is ____ book» = «Αυτό είναι το βιβλίο μου».",
+          "answer": "my",
+          "acceptedAnswers": [
+            "my"
+          ],
+          "explanation": "Το «μου» αποδίδεται εδώ με my, πριν από το book: This is my book."
+        },
+        {
+          "id": "her-bag",
+          "type": "multiple-choice",
+          "prompt": "Η Άννα έχει ένα βιβλίο. Ποια φράση σημαίνει «το βιβλίο της»;",
+          "answer": "her book",
+          "acceptedAnswers": [
+            "her book"
+          ],
+          "explanation": "Για κάτι που ανήκει στην Άννα χρησιμοποιούμε her: her book.",
+          "choices": [
+            "his book",
+            "my book",
+            "her book"
+          ]
+        },
+        {
+          "id": "his-book",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Αυτό είναι το βιβλίο του».",
+          "answer": "This is his book",
+          "acceptedAnswers": [
+            "This is his book"
+          ],
+          "explanation": "Το his βρίσκεται πριν από το book: This is his book.",
+          "tokens": [
+            "book",
+            "This",
+            "his",
+            "is"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "simple-descriptions",
+      "title": "Περιγράφω με λίγες λέξεις",
+      "subtitle": "Μεγάλο, μικρό, παλιό και καινούριο",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Χρησιμοποιώ απλά επίθετα πριν από ένα αγγλικό ουσιαστικό.",
+      "cards": [
+        {
+          "word": "big · small",
+          "translation": "μεγάλος · μικρός",
+          "example": "This is a small book.",
+          "exampleTranslation": "Αυτό είναι ένα μικρό βιβλίο. Το small μπαίνει πριν από το book. Το big σημαίνει μεγάλος."
+        },
+        {
+          "word": "old · new",
+          "translation": "παλιός · καινούριος",
+          "example": "This is a new car.",
+          "exampleTranslation": "Αυτό είναι ένα καινούριο αυτοκίνητο. Το new σημαίνει καινούριος και το old παλιός, όταν περιγράφουμε αντικείμενα."
+        },
+        {
+          "word": "a big house",
+          "translation": "ένα μεγάλο σπίτι",
+          "example": "This is a big house.",
+          "exampleTranslation": "Αυτό είναι ένα μεγάλο σπίτι. Στα αγγλικά το επίθετο big δεν αλλάζει γένος και τοποθετείται πριν από το ουσιαστικό house."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "choose-small",
+          "type": "multiple-choice",
+          "prompt": "Ποια λέξη σημαίνει «μικρός»;",
+          "answer": "small",
+          "acceptedAnswers": [
+            "small"
+          ],
+          "explanation": "Small σημαίνει μικρός. Big σημαίνει μεγάλος και new καινούριος.",
+          "choices": [
+            "new",
+            "small",
+            "big"
+          ]
+        },
+        {
+          "id": "new-car",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Αυτό είναι ένα καινούριο αυτοκίνητο».",
+          "answer": "This is a new car",
+          "acceptedAnswers": [
+            "This is a new car"
+          ],
+          "explanation": "Η σειρά είναι This is a new car. Το επίθετο new προηγείται του car.",
+          "tokens": [
+            "car",
+            "new",
+            "This",
+            "a",
+            "is"
+          ]
+        },
+        {
+          "id": "old-book",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε μόνο τη λέξη που λείπει: «an ____ book» = «ένα παλιό βιβλίο».",
+          "answer": "old",
+          "acceptedAnswers": [
+            "old"
+          ],
+          "explanation": "Χρησιμοποιούμε old για «παλιό». Μπροστά από τον φωνηεντικό ήχο του old βάζουμε an: an old book."
+        }
+      ]
+    },
+    {
+      "id": "rooms-at-home",
+      "title": "Μέσα στο σπίτι",
+      "subtitle": "Κουζίνα, υπνοδωμάτιο και μπάνιο",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Ονομάζω τρία δωμάτια και βρίσκω πού βρίσκεται ένα πρόσωπο σε σύντομη πρόταση.",
+      "cards": [
+        {
+          "word": "kitchen",
+          "translation": "κουζίνα",
+          "example": "I am in the kitchen.",
+          "exampleTranslation": "Είμαι στην κουζίνα. Η φράση in the kitchen δείχνει σε ποιο δωμάτιο βρίσκομαι."
+        },
+        {
+          "word": "bedroom",
+          "translation": "υπνοδωμάτιο",
+          "example": "My book is in the bedroom.",
+          "exampleTranslation": "Το βιβλίο μου είναι στο υπνοδωμάτιο. Bedroom σημαίνει υπνοδωμάτιο."
+        },
+        {
+          "word": "bathroom",
+          "translation": "μπάνιο",
+          "example": "The bathroom is small.",
+          "exampleTranslation": "Το μπάνιο είναι μικρό. Το bathroom είναι το δωμάτιο, όχι η πράξη του μπάνιου."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "choose-kitchen",
+          "type": "multiple-choice",
+          "prompt": "Ποια λέξη σημαίνει «κουζίνα» ως δωμάτιο;",
+          "answer": "kitchen",
+          "acceptedAnswers": [
+            "kitchen"
+          ],
+          "explanation": "Kitchen είναι η κουζίνα. Bedroom είναι το υπνοδωμάτιο και bathroom το μπάνιο.",
+          "choices": [
+            "bathroom",
+            "bedroom",
+            "kitchen"
+          ]
+        },
+        {
+          "id": "find-room",
+          "type": "reading",
+          "prompt": "Πού βρίσκεται η Άννα; Γράψε μόνο την αγγλική λέξη για το δωμάτιο.",
+          "answer": "bedroom",
+          "acceptedAnswers": [
+            "bedroom",
+            "the bedroom",
+            "in the bedroom"
+          ],
+          "explanation": "Το κείμενο λέει Anna is in the bedroom. Η Άννα είναι στο υπνοδωμάτιο· το βιβλίο της είναι στην κουζίνα.",
+          "passage": "Anna is in the bedroom. Her book is in the kitchen."
+        },
+        {
+          "id": "hear-bathroom",
+          "type": "listening",
+          "prompt": "Άκου την πρόταση. Ποιο δωμάτιο αναφέρεται; Γράψε μόνο την αγγλική λέξη.",
+          "answer": "bathroom",
+          "acceptedAnswers": [
+            "bathroom"
+          ],
+          "explanation": "Η πρόταση αναφέρεται στο bathroom, δηλαδή στο μπάνιο.",
+          "audioText": "The bathroom is small."
+        }
+      ]
+    },
+    {
+      "id": "place-prepositions",
+      "title": "Πού είναι το βιβλίο;",
+      "subtitle": "In, on και under για τη θέση",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Ξεχωρίζω τις προθέσεις in, on και under σε απλές περιγραφές θέσης.",
+      "cards": [
+        {
+          "word": "in",
+          "translation": "μέσα σε",
+          "example": "The book is in the bag.",
+          "exampleTranslation": "Το βιβλίο είναι μέσα στην τσάντα. In δείχνει θέση μέσα σε κάτι. Bag σημαίνει τσάντα."
+        },
+        {
+          "word": "on",
+          "translation": "πάνω σε",
+          "example": "The book is on the table.",
+          "exampleTranslation": "Το βιβλίο είναι πάνω στο τραπέζι. Το on δηλώνει εδώ επαφή με την επιφάνεια."
+        },
+        {
+          "word": "under",
+          "translation": "κάτω από",
+          "example": "The book is under the chair.",
+          "exampleTranslation": "Το βιβλίο είναι κάτω από την καρέκλα. Under σημαίνει κάτω από."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "under-chair",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε μόνο τη λέξη: «The book is ____ the chair» = «Το βιβλίο είναι κάτω από την καρέκλα».",
+          "answer": "under",
+          "acceptedAnswers": [
+            "under"
+          ],
+          "explanation": "Το «κάτω από» αποδίδεται με under: under the chair."
+        },
+        {
+          "id": "choose-on",
+          "type": "multiple-choice",
+          "prompt": "Ποια φράση σημαίνει «πάνω στο τραπέζι»;",
+          "answer": "on the table",
+          "acceptedAnswers": [
+            "on the table"
+          ],
+          "explanation": "On the table σημαίνει πάνω στο τραπέζι. Under the table σημαίνει κάτω από το τραπέζι.",
+          "choices": [
+            "under the table",
+            "on the table",
+            "in the bag"
+          ]
+        },
+        {
+          "id": "book-in-bag",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Το βιβλίο είναι μέσα στην τσάντα».",
+          "answer": "The book is in the bag",
+          "acceptedAnswers": [
+            "The book is in the bag"
+          ],
+          "explanation": "Η σωστή σειρά είναι The book is in the bag: πρώτα το αντικείμενο και μετά η θέση του.",
+          "tokens": [
+            "bag",
+            "in",
+            "The",
+            "book",
+            "the",
+            "is"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "there-is-there-are",
+      "title": "Τι υπάρχει στο δωμάτιο;",
+      "subtitle": "There is για ένα, there are για περισσότερα",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Περιγράφω την ύπαρξη ενός ή περισσότερων αντικειμένων και κάνω απλή ερώτηση με Is there.",
+      "cards": [
+        {
+          "word": "There is a chair.",
+          "translation": "Υπάρχει μία καρέκλα.",
+          "example": "There is a chair in the kitchen.",
+          "exampleTranslation": "Υπάρχει μία καρέκλα στην κουζίνα. Χρησιμοποιούμε there is για ένα πρόσωπο ή πράγμα."
+        },
+        {
+          "word": "There are two chairs.",
+          "translation": "Υπάρχουν δύο καρέκλες.",
+          "example": "There are two chairs in the kitchen.",
+          "exampleTranslation": "Υπάρχουν δύο καρέκλες στην κουζίνα. Για περισσότερα από ένα χρησιμοποιούμε there are και πληθυντικό: chairs."
+        },
+        {
+          "word": "Is there a table?",
+          "translation": "Υπάρχει τραπέζι;",
+          "example": "Is there a table in the kitchen?",
+          "exampleTranslation": "Υπάρχει τραπέζι στην κουζίνα; Στην ερώτηση βάζουμε το Is πριν από το there."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "plural-existence",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε μόνο is ή are: «There ____ two chairs».",
+          "answer": "are",
+          "acceptedAnswers": [
+            "are"
+          ],
+          "explanation": "Το two chairs είναι πληθυντικός, άρα λέμε There are two chairs."
+        },
+        {
+          "id": "ask-table",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά για την ερώτηση «Υπάρχει τραπέζι;».",
+          "answer": "Is there a table",
+          "acceptedAnswers": [
+            "Is there a table"
+          ],
+          "explanation": "Η ερώτηση αρχίζει Is there: Is there a table?",
+          "tokens": [
+            "table",
+            "there",
+            "a",
+            "Is"
+          ]
+        },
+        {
+          "id": "count-chairs",
+          "type": "reading",
+          "prompt": "Πόσες καρέκλες υπάρχουν στην κουζίνα; Γράψε τον αριθμό με αγγλική λέξη ή ψηφίο.",
+          "answer": "two",
+          "acceptedAnswers": [
+            "two",
+            "2",
+            "two chairs",
+            "2 chairs"
+          ],
+          "explanation": "Το κείμενο λέει There are two chairs: υπάρχουν δύο καρέκλες.",
+          "passage": "There is a table in the kitchen. There are two chairs. There is a book on the table."
+        }
+      ]
+    },
+    {
+      "id": "daily-routine",
+      "title": "Η καθημερινή μου ρουτίνα",
+      "subtitle": "Μια μικρή συνήθεια, μια απλή πρόταση",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Καταλαβαίνω και σχηματίζω απλές προτάσεις για καθημερινές συνήθειες.",
+      "cards": [
+        {
+          "word": "I get up at seven.",
+          "translation": "Σηκώνομαι στις επτά.",
+          "example": "I get up at seven every day.",
+          "exampleTranslation": "Σηκώνομαι στις επτά κάθε μέρα. Get up σημαίνει σηκώνομαι και seven είναι επτά. Χρησιμοποιούμε at πριν από την ώρα."
+        },
+        {
+          "word": "I have breakfast.",
+          "translation": "Τρώω πρωινό.",
+          "example": "I have breakfast at home.",
+          "exampleTranslation": "Τρώω πρωινό στο σπίτι. Το have breakfast είναι η συνηθισμένη αγγλική φράση για το τρώω πρωινό."
+        },
+        {
+          "word": "every day",
+          "translation": "κάθε μέρα",
+          "example": "I read every day.",
+          "exampleTranslation": "Διαβάζω κάθε μέρα. Η χωριστή φράση every day δηλώνει πόσο συχνά γίνεται κάτι."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "get-up-seven",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Σηκώνομαι στις επτά».",
+          "answer": "I get up at seven",
+          "acceptedAnswers": [
+            "I get up at seven",
+            "At seven I get up",
+            "At seven, I get up"
+          ],
+          "explanation": "Λέμε I get up at seven. Το at μπαίνει πριν από την ώρα.",
+          "tokens": [
+            "seven",
+            "up",
+            "I",
+            "at",
+            "get"
+          ]
+        },
+        {
+          "id": "breakfast-meaning",
+          "type": "multiple-choice",
+          "prompt": "Ποια αγγλική πρόταση σημαίνει «Τρώω πρωινό»;",
+          "answer": "I have breakfast.",
+          "acceptedAnswers": [
+            "I have breakfast."
+          ],
+          "explanation": "Το have breakfast σημαίνει τρώω πρωινό. Εδώ το have δεν μεταφράζεται κατά λέξη ως έχω.",
+          "choices": [
+            "I read a book.",
+            "I have breakfast.",
+            "I am in the kitchen."
+          ]
+        },
+        {
+          "id": "hear-seven",
+          "type": "listening",
+          "prompt": "Άκου τη συνήθεια. Τι ώρα σηκώνεται το πρόσωπο; Γράψε τον αριθμό με αγγλική λέξη ή ψηφίο.",
+          "answer": "seven",
+          "acceptedAnswers": [
+            "seven",
+            "7"
+          ],
+          "explanation": "Στη φράση at seven ακούγεται ο αριθμός επτά. Απάντησε seven ή 7.",
+          "audioText": "I get up at seven every day."
+        }
+      ]
+    },
+    {
+      "id": "everyday-questions",
+      "title": "Ρωτάω για την καθημερινότητα",
+      "subtitle": "Do you και does she στον απλό ενεστώτα",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Σχηματίζω απλές ερωτήσεις για συνήθειες με do και does.",
+      "cards": [
+        {
+          "word": "Do you read every day?",
+          "translation": "Διαβάζεις κάθε μέρα;",
+          "example": "Do you read every day?",
+          "exampleTranslation": "Για ερώτηση συνήθειας με you βάζουμε Do στην αρχή και το βασικό ρήμα read χωρίς αλλαγή."
+        },
+        {
+          "word": "Does she read every day?",
+          "translation": "Διαβάζει εκείνη κάθε μέρα;",
+          "example": "Does she read every day?",
+          "exampleTranslation": "Με he ή she χρησιμοποιούμε Does. Το ρήμα μένει read, όχι reads, επειδή το does δείχνει ήδη το τρίτο πρόσωπο."
+        },
+        {
+          "word": "Where do you live?",
+          "translation": "Πού μένεις;",
+          "example": "Where do you live?",
+          "exampleTranslation": "Where σημαίνει πού και live μένω. Η σειρά είναι Where → do → you → live."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "does-she",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε μόνο Do ή Does: «____ she read every day?»",
+          "answer": "Does",
+          "acceptedAnswers": [
+            "Does"
+          ],
+          "explanation": "Με she χρησιμοποιούμε Does: Does she read every day?"
+        },
+        {
+          "id": "where-you-live",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Πού μένεις;».",
+          "answer": "Where do you live",
+          "acceptedAnswers": [
+            "Where do you live"
+          ],
+          "explanation": "Η ερώτηση είναι Where do you live? Η λέξη Where προηγείται του do.",
+          "tokens": [
+            "live",
+            "you",
+            "Where",
+            "do"
+          ]
+        },
+        {
+          "id": "question-base-verb",
+          "type": "multiple-choice",
+          "prompt": "Ποια ερώτηση είναι σωστή για μια συνήθεια;",
+          "answer": "Does she read every day?",
+          "acceptedAnswers": [
+            "Does she read every day?"
+          ],
+          "explanation": "Το Does συμφωνεί με το she και το κύριο ρήμα μένει read, χωρίς s.",
+          "choices": [
+            "Does she reads every day?",
+            "Do she read every day?",
+            "Does she read every day?"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "everyday-negatives",
+      "title": "Λέω τι δεν κάνω",
+      "subtitle": "Don’t και doesn’t χωρίς δεύτερο s",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Σχηματίζω αρνητικές προτάσεις για συνήθειες με do not και does not.",
+      "cards": [
+        {
+          "word": "I don't drink coffee.",
+          "translation": "Δεν πίνω καφέ.",
+          "example": "I do not drink coffee.",
+          "exampleTranslation": "Drink σημαίνει πίνω. Το do not συντομεύεται σε don’t. Με I χρησιμοποιούμε do not και το βασικό ρήμα drink."
+        },
+        {
+          "word": "She doesn't drink coffee.",
+          "translation": "Εκείνη δεν πίνει καφέ.",
+          "example": "She does not drink coffee.",
+          "exampleTranslation": "Το does not συντομεύεται σε doesn’t. Με she χρησιμοποιούμε does not και το drink μένει χωρίς s."
+        },
+        {
+          "word": "They don't read every day.",
+          "translation": "Δεν διαβάζουν κάθε μέρα.",
+          "example": "They do not read every day.",
+          "exampleTranslation": "They σημαίνει αυτοί ή αυτές. Με they χρησιμοποιούμε do not, όπως με I και you."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "she-does-not",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε μόνο do ή does: «She ____ not drink coffee».",
+          "answer": "does",
+          "acceptedAnswers": [
+            "does"
+          ],
+          "explanation": "Με she η άρνηση είναι does not: She does not drink coffee."
+        },
+        {
+          "id": "they-do-not-read",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Δεν διαβάζουν κάθε μέρα».",
+          "answer": "They do not read every day",
+          "acceptedAnswers": [
+            "They do not read every day"
+          ],
+          "explanation": "Η σειρά είναι They do not read every day. Το do not μπαίνει πριν από το read.",
+          "tokens": [
+            "read",
+            "not",
+            "day",
+            "They",
+            "every",
+            "do"
+          ]
+        },
+        {
+          "id": "negative-without-s",
+          "type": "multiple-choice",
+          "prompt": "Ποια αρνητική πρόταση είναι σωστή;",
+          "answer": "She does not drink coffee.",
+          "acceptedAnswers": [
+            "She does not drink coffee."
+          ],
+          "explanation": "Με she χρειαζόμαστε does not και μετά το βασικό drink, χωρίς δεύτερο s.",
+          "choices": [
+            "She do not drink coffee.",
+            "She does not drinks coffee.",
+            "She does not drink coffee."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "food-and-drink",
+      "title": "Τι τρώμε και τι πίνουμε;",
+      "subtitle": "Ψωμί, γάλα και νερό",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Αναγνωρίζω βασικά τρόφιμα και ποτά και χρησιμοποιώ eat και drink.",
+      "cards": [
+        {
+          "word": "bread",
+          "translation": "ψωμί",
+          "example": "I eat bread for breakfast.",
+          "exampleTranslation": "Τρώω ψωμί για πρωινό. Eat σημαίνει τρώω. Όταν μιλάμε γενικά για ψωμί, λέμε bread χωρίς a."
+        },
+        {
+          "word": "milk",
+          "translation": "γάλα",
+          "example": "I drink milk.",
+          "exampleTranslation": "Πίνω γάλα. Το milk είναι γάλα. Για μια γενική ποσότητα γάλακτος δεν λέμε a milk."
+        },
+        {
+          "word": "water",
+          "translation": "νερό",
+          "example": "I drink water every day.",
+          "exampleTranslation": "Πίνω νερό κάθε μέρα. Χρησιμοποιούμε drink για αυτό που πίνουμε και eat για αυτό που τρώμε."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "choose-water",
+          "type": "multiple-choice",
+          "prompt": "Ποια αγγλική λέξη σημαίνει «νερό»;",
+          "answer": "water",
+          "acceptedAnswers": [
+            "water"
+          ],
+          "explanation": "Water σημαίνει νερό. Milk είναι γάλα και bread ψωμί.",
+          "choices": [
+            "bread",
+            "water",
+            "milk"
+          ]
+        },
+        {
+          "id": "eat-bread",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε μόνο eat ή drink: «I ____ bread».",
+          "answer": "eat",
+          "acceptedAnswers": [
+            "eat"
+          ],
+          "explanation": "Το ψωμί το τρώμε: I eat bread. Το drink χρησιμοποιείται για κάτι που πίνουμε."
+        },
+        {
+          "id": "breakfast-drink",
+          "type": "reading",
+          "prompt": "Τι πίνει η Άννα στο πρωινό; Γράψε μόνο την αγγλική λέξη.",
+          "answer": "milk",
+          "acceptedAnswers": [
+            "milk",
+            "some milk"
+          ],
+          "explanation": "Το κείμενο λέει drinks milk, άρα πίνει γάλα.",
+          "passage": "Anna has breakfast at home. She eats bread and drinks milk."
+        }
+      ]
+    },
+    {
+      "id": "some-and-any",
+      "title": "Λίγο και μερικά",
+      "subtitle": "Some και any σε βασικά παραδείγματα",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Χρησιμοποιώ some σε απλή κατάφαση και any σε απλή άρνηση ή ουδέτερη ερώτηση.",
+      "cards": [
+        {
+          "word": "some bread",
+          "translation": "λίγο ψωμί",
+          "example": "There is some bread on the table.",
+          "exampleTranslation": "Υπάρχει λίγο ψωμί στο τραπέζι. Το some συνοδεύει εδώ μη μετρήσιμη ποσότητα. Με πληθυντικό, some apples σημαίνει μερικά μήλα."
+        },
+        {
+          "word": "not any milk",
+          "translation": "καθόλου γάλα",
+          "example": "There is not any milk.",
+          "exampleTranslation": "Δεν υπάρχει καθόλου γάλα. Στη βασική αυτή αρνητική πρόταση χρησιμοποιούμε any αντί για some."
+        },
+        {
+          "word": "Is there any water?",
+          "translation": "Υπάρχει καθόλου νερό;",
+          "example": "Is there any water in the kitchen?",
+          "exampleTranslation": "Σε μια ουδέτερη ερώτηση για το αν υπάρχει νερό χρησιμοποιούμε any. Το some μπορεί επίσης να μπει σε προσφορές ή ευγενικά αιτήματα· ο κανόνας δεν ισχύει για όλες τις ερωτήσεις."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "some-bread",
+          "type": "multiple-choice",
+          "prompt": "Ποια φράση σημαίνει «λίγο ψωμί»;",
+          "answer": "some bread",
+          "acceptedAnswers": [
+            "some bread"
+          ],
+          "explanation": "Για μια απλή μη μετρήσιμη ποσότητα ψωμιού λέμε some bread. Δεν μετράμε εδώ ολόκληρα καρβέλια ή διαφορετικά είδη.",
+          "choices": [
+            "some bread",
+            "a bread",
+            "three breads"
+          ]
+        },
+        {
+          "id": "negative-any",
+          "type": "gap",
+          "prompt": "Χρησιμοποίησε some ή any σύμφωνα με το αρνητικό παράδειγμα του μαθήματος: «There is not ____ milk».",
+          "answer": "any",
+          "acceptedAnswers": [
+            "any"
+          ],
+          "explanation": "Στο βασικό αρνητικό παράδειγμα βάζουμε any: There is not any milk."
+        },
+        {
+          "id": "any-water-question",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Υπάρχει καθόλου νερό;».",
+          "answer": "Is there any water",
+          "acceptedAnswers": [
+            "Is there any water"
+          ],
+          "explanation": "Σχηματίζουμε την ερώτηση Is there any water? Το any προηγείται του water.",
+          "tokens": [
+            "water",
+            "any",
+            "Is",
+            "there"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shopping-prices",
+      "title": "Στο κατάστημα",
+      "subtitle": "Αριθμοί, τιμές και περισσότερα από ένα αντικείμενα",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Καταλαβαίνω τιμές δέκα και είκοσι ευρώ και ρωτώ την τιμή πολλών αντικειμένων.",
+      "cards": [
+        {
+          "word": "ten · twenty",
+          "translation": "δέκα · είκοσι",
+          "example": "Ten euros. Twenty euros.",
+          "exampleTranslation": "Ten σημαίνει δέκα και twenty είκοσι. Μια τιμή μπορεί να γραφτεί και με ψηφία: 10 ή 20."
+        },
+        {
+          "word": "How much are these apples?",
+          "translation": "Πόσο κάνουν αυτά τα μήλα;",
+          "example": "How much are these apples?",
+          "exampleTranslation": "Για περισσότερα από ένα αντικείμενα λέμε How much are…? Το these σημαίνει αυτά και το apples είναι ο πληθυντικός του apple."
+        },
+        {
+          "word": "They are ten euros.",
+          "translation": "Κάνουν δέκα ευρώ.",
+          "example": "The apples are ten euros.",
+          "exampleTranslation": "Εδώ το they αναφέρεται στα μήλα. Με πληθυντικό χρησιμοποιούμε are, ενώ για ένα αντικείμενο χρησιμοποιούμε is."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "ask-plural-price",
+          "type": "multiple-choice",
+          "prompt": "Ποια ερώτηση ζητά την τιμή για «αυτά τα μήλα»;",
+          "answer": "How much are these apples?",
+          "acceptedAnswers": [
+            "How much are these apples?"
+          ],
+          "explanation": "Για τα μήλα στον πληθυντικό λέμε How much are these apples? Η ερώτηση με Where ζητά θέση, όχι τιμή.",
+          "choices": [
+            "How much is this apple?",
+            "How much are these apples?",
+            "Where are these apples?"
+          ]
+        },
+        {
+          "id": "read-twenty",
+          "type": "reading",
+          "prompt": "Πόσα ευρώ κάνουν τα βιβλία; Γράψε τον αριθμό με αγγλική λέξη ή ψηφίο.",
+          "answer": "twenty",
+          "acceptedAnswers": [
+            "twenty",
+            "20",
+            "twenty euros",
+            "20 euros"
+          ],
+          "explanation": "Η γραμμή Books γράφει twenty euros: είκοσι ευρώ.",
+          "passage": "Apples: ten euros.\nBooks: twenty euros."
+        },
+        {
+          "id": "apples-ten-euros",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Τα μήλα κάνουν δέκα ευρώ».",
+          "answer": "The apples are ten euros",
+          "acceptedAnswers": [
+            "The apples are ten euros"
+          ],
+          "explanation": "Με το apples στον πληθυντικό χρησιμοποιούμε are: The apples are ten euros.",
+          "tokens": [
+            "euros",
+            "are",
+            "The",
+            "ten",
+            "apples"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "town-directions",
+      "title": "Βρίσκω τον δρόμο",
+      "subtitle": "Αριστερά, δεξιά και ευθεία",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Καταλαβαίνω τρεις σύντομες οδηγίες κατεύθυνσης.",
+      "cards": [
+        {
+          "word": "Turn left.",
+          "translation": "Στρίψε αριστερά.",
+          "example": "Turn left.",
+          "exampleTranslation": "Turn σημαίνει στρίψε και left αριστερά. Στην απλή οδηγία αρχίζουμε κατευθείαν με το ρήμα."
+        },
+        {
+          "word": "Turn right.",
+          "translation": "Στρίψε δεξιά.",
+          "example": "Turn right.",
+          "exampleTranslation": "Right σημαίνει εδώ δεξιά. Η ίδια λέξη μπορεί σε άλλο πλαίσιο να σημαίνει σωστός."
+        },
+        {
+          "word": "Go straight ahead.",
+          "translation": "Προχώρα ευθεία.",
+          "example": "Go straight ahead.",
+          "exampleTranslation": "Η φράση straight ahead σημαίνει ευθεία μπροστά. Είναι οδηγία κίνησης, χωρίς να χρειάζεται να στρίψουμε."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "choose-left",
+          "type": "multiple-choice",
+          "prompt": "Ποια οδηγία σημαίνει «Στρίψε αριστερά»;",
+          "answer": "Turn left.",
+          "acceptedAnswers": [
+            "Turn left."
+          ],
+          "explanation": "Η σωστή οδηγία είναι Turn left. Το right σημαίνει δεξιά.",
+          "choices": [
+            "Go straight ahead.",
+            "Turn right.",
+            "Turn left."
+          ]
+        },
+        {
+          "id": "straight-ahead",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Προχώρα ευθεία».",
+          "answer": "Go straight ahead",
+          "acceptedAnswers": [
+            "Go straight ahead"
+          ],
+          "explanation": "Η φυσική σειρά της φράσης είναι Go straight ahead.",
+          "tokens": [
+            "ahead",
+            "Go",
+            "straight"
+          ]
+        },
+        {
+          "id": "hear-right",
+          "type": "listening",
+          "prompt": "Άκου την οδηγία. Ποια αγγλική λέξη δείχνει την κατεύθυνση; Γράψε μόνο left ή right.",
+          "answer": "right",
+          "acceptedAnswers": [
+            "right"
+          ],
+          "explanation": "Ακούγεται Turn right: Στρίψε δεξιά. Η λέξη της κατεύθυνσης είναι right.",
+          "audioText": "Turn right."
+        }
+      ]
+    },
+    {
+      "id": "everyday-transport",
+      "title": "Πώς πηγαίνεις στην πόλη;",
+      "subtitle": "Με λεωφορείο, με τρένο ή με τα πόδια",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Περιγράφω τρεις απλούς τρόπους μετακίνησης με by και on foot.",
+      "cards": [
+        {
+          "word": "by bus",
+          "translation": "με λεωφορείο",
+          "example": "I go to town by bus.",
+          "exampleTranslation": "Πηγαίνω στην πόλη με λεωφορείο. Στη φράση by bus δεν βάζουμε a ή the μπροστά από το bus."
+        },
+        {
+          "word": "by train",
+          "translation": "με τρένο",
+          "example": "I go by train.",
+          "exampleTranslation": "Πηγαίνω με τρένο. Το by train δείχνει το μέσο μετακίνησης."
+        },
+        {
+          "word": "on foot",
+          "translation": "με τα πόδια",
+          "example": "I go to town on foot.",
+          "exampleTranslation": "Πηγαίνω στην πόλη με τα πόδια. Η σταθερή φράση είναι on foot, όχι by foot."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "choose-on-foot",
+          "type": "multiple-choice",
+          "prompt": "Ποια φράση σημαίνει «με τα πόδια»;",
+          "answer": "on foot",
+          "acceptedAnswers": [
+            "on foot"
+          ],
+          "explanation": "Λέμε on foot για μετακίνηση με τα πόδια. Το by train σημαίνει με τρένο.",
+          "choices": [
+            "by foot",
+            "on foot",
+            "by train"
+          ]
+        },
+        {
+          "id": "town-by-bus",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Πηγαίνω στην πόλη με λεωφορείο».",
+          "answer": "I go to town by bus",
+          "acceptedAnswers": [
+            "I go to town by bus",
+            "By bus I go to town",
+            "By bus, I go to town"
+          ],
+          "explanation": "Η σωστή πρόταση είναι I go to town by bus. Το μέσο ακολουθεί μετά το by.",
+          "tokens": [
+            "by",
+            "town",
+            "I",
+            "bus",
+            "to",
+            "go"
+          ]
+        },
+        {
+          "id": "anna-train",
+          "type": "reading",
+          "prompt": "Πώς μετακινείται η Άννα; Γράψε train ή bus.",
+          "answer": "train",
+          "acceptedAnswers": [
+            "train",
+            "by train"
+          ],
+          "explanation": "Το κείμενο ξεχωρίζει τα δύο πρόσωπα: η Άννα πηγαίνει by train, ενώ η αδελφή της by bus.",
+          "passage": "Anna goes to town by train. Her sister goes by bus."
+        }
+      ]
+    },
+    {
+      "id": "travel-tickets",
+      "title": "Ένα εισιτήριο, παρακαλώ",
+      "subtitle": "Προορισμός, απλή διαδρομή και αναχώρηση",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Ζητώ εισιτήριο με προορισμό και καταλαβαίνω βασική πληροφορία αναχώρησης.",
+      "cards": [
+        {
+          "word": "A ticket to Athens, please.",
+          "translation": "Ένα εισιτήριο για την Αθήνα, παρακαλώ.",
+          "example": "A ticket to Athens, please.",
+          "exampleTranslation": "Ticket σημαίνει εισιτήριο. Το to πριν από την πόλη δείχνει προορισμό. Το please κάνει το αίτημα ευγενικό."
+        },
+        {
+          "word": "a single ticket · a return ticket",
+          "translation": "εισιτήριο απλής διαδρομής · εισιτήριο με επιστροφή",
+          "example": "A single ticket, please.",
+          "exampleTranslation": "Το single ticket είναι απλής διαδρομής και το return ticket περιλαμβάνει επιστροφή. Αυτές οι ονομασίες είναι συνηθισμένες στα βρετανικά αγγλικά."
+        },
+        {
+          "word": "The train leaves at ten o'clock.",
+          "translation": "Το τρένο αναχωρεί στις δέκα ακριβώς.",
+          "example": "The train leaves at ten o'clock.",
+          "exampleTranslation": "Leaves σημαίνει εδώ αναχωρεί. Η φράση at ten o’clock δίνει την ώρα αναχώρησης, δέκα ακριβώς."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "single-ticket",
+          "type": "multiple-choice",
+          "prompt": "Θέλεις εισιτήριο μόνο για να πας, χωρίς επιστροφή. Ποια φράση ταιριάζει;",
+          "answer": "a single ticket",
+          "acceptedAnswers": [
+            "a single ticket"
+          ],
+          "explanation": "Το single ticket είναι εισιτήριο απλής διαδρομής. Το return ticket περιλαμβάνει και επιστροφή.",
+          "choices": [
+            "a return ticket",
+            "a single ticket",
+            "a small book"
+          ]
+        },
+        {
+          "id": "ticket-to-athens",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Ένα εισιτήριο για την Αθήνα, παρακαλώ».",
+          "answer": "A ticket to Athens please",
+          "acceptedAnswers": [
+            "A ticket to Athens please",
+            "A ticket to Athens, please"
+          ],
+          "explanation": "Λέμε A ticket to Athens, please. Το to μπαίνει πριν από τον προορισμό. Στην άσκηση δεν χρειάζεται κόμμα.",
+          "tokens": [
+            "Athens",
+            "please",
+            "ticket",
+            "A",
+            "to"
+          ]
+        },
+        {
+          "id": "departure-ten",
+          "type": "reading",
+          "prompt": "Τι ώρα αναχωρεί το τρένο; Γράψε τον αριθμό με αγγλική λέξη ή ψηφίο.",
+          "answer": "ten",
+          "acceptedAnswers": [
+            "ten",
+            "10",
+            "ten o'clock",
+            "10:00"
+          ],
+          "explanation": "Η πρώτη πρόταση δίνει την ώρα: at ten o’clock. Τα twenty euros είναι η τιμή, όχι η ώρα.",
+          "passage": "The train leaves at ten o'clock. A single ticket is twenty euros."
+        }
+      ]
+    },
+    {
+      "id": "can-and-cannot",
+      "title": "Τι μπορώ να κάνω;",
+      "subtitle": "Can για δυνατότητα και απλή βοήθεια",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Χρησιμοποιώ can και cannot με βασικό ρήμα και κάνω μια απλή ερώτηση.",
+      "cards": [
+        {
+          "word": "I can swim.",
+          "translation": "Μπορώ να κολυμπήσω.",
+          "example": "I can swim.",
+          "exampleTranslation": "Swim σημαίνει κολυμπώ. Μετά το can βάζουμε το βασικό ρήμα χωρίς to. Το can δεν παίρνει s με he ή she."
+        },
+        {
+          "word": "She cannot drive.",
+          "translation": "Εκείνη δεν μπορεί να οδηγήσει.",
+          "example": "She can't drive.",
+          "exampleTranslation": "Drive σημαίνει οδηγώ. Το cannot γράφεται συνήθως ως μία λέξη και συντομεύεται σε can’t. Μετά ακολουθεί drive, χωρίς to ή s."
+        },
+        {
+          "word": "Can you help me?",
+          "translation": "Μπορείς να με βοηθήσεις;",
+          "example": "Can you help me?",
+          "exampleTranslation": "Help σημαίνει βοηθώ και me εμένα ή με. Για την ερώτηση βάζουμε το Can πριν από το you, χωρίς do."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "can-swim",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε μόνο το ρήμα swim ή swims: «She can ____».",
+          "answer": "swim",
+          "acceptedAnswers": [
+            "swim"
+          ],
+          "explanation": "Μετά το can κρατάμε το βασικό swim. Δεν προσθέτουμε s ακόμη και με she."
+        },
+        {
+          "id": "cannot-drive",
+          "type": "multiple-choice",
+          "prompt": "Ποια πρόταση σημαίνει «Εκείνη δεν μπορεί να οδηγήσει»;",
+          "answer": "She cannot drive.",
+          "acceptedAnswers": [
+            "She cannot drive."
+          ],
+          "explanation": "Η άρνηση είναι She cannot drive. Το can σημαίνει μπορεί, ενώ το cannot δεν μπορεί.",
+          "choices": [
+            "She can drive.",
+            "She cannot drive.",
+            "She cannot drives."
+          ]
+        },
+        {
+          "id": "can-you-help",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Μπορείς να με βοηθήσεις;».",
+          "answer": "Can you help me",
+          "acceptedAnswers": [
+            "Can you help me"
+          ],
+          "explanation": "Η ερώτηση είναι Can you help me? Το Can προηγείται του you.",
+          "tokens": [
+            "help",
+            "me",
+            "Can",
+            "you"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "happening-now",
+      "title": "Τι γίνεται αυτή τη στιγμή;",
+      "subtitle": "Am, is ή are μαζί με ρήμα σε -ing",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Σχηματίζω απλές προτάσεις για ενέργειες που συμβαίνουν τώρα.",
+      "cards": [
+        {
+          "word": "I am reading now.",
+          "translation": "Διαβάζω τώρα.",
+          "example": "I am reading a book now.",
+          "exampleTranslation": "Για κάτι που γίνεται αυτή τη στιγμή χρησιμοποιούμε am/is/are και ρήμα σε -ing. Με I λέμε I am reading. Δεν είναι το ίδιο με τη συνήθεια I read every day."
+        },
+        {
+          "word": "She is cooking now.",
+          "translation": "Εκείνη μαγειρεύει τώρα.",
+          "example": "She is cooking in the kitchen.",
+          "exampleTranslation": "Cook σημαίνει μαγειρεύω. Με she χρησιμοποιούμε is και cooking για την πράξη που γίνεται τώρα."
+        },
+        {
+          "word": "They are waiting now.",
+          "translation": "Περιμένουν τώρα.",
+          "example": "They are waiting for the bus.",
+          "exampleTranslation": "Wait σημαίνει περιμένω. Με they χρησιμοποιούμε are και waiting. Το for the bus σημαίνει για το λεωφορείο."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "she-is-cooking",
+          "type": "gap",
+          "prompt": "Συμπλήρωσε μόνο am, is ή are: «She ____ cooking now».",
+          "answer": "is",
+          "acceptedAnswers": [
+            "is"
+          ],
+          "explanation": "Με she βάζουμε is: She is cooking now. Χρειαζόμαστε και το is και το cooking."
+        },
+        {
+          "id": "they-are-waiting",
+          "type": "word-order",
+          "prompt": "Βάλε τις λέξεις στη σειρά: «Περιμένουν τώρα».",
+          "answer": "They are waiting now",
+          "acceptedAnswers": [
+            "They are waiting now",
+            "They are now waiting",
+            "Now they are waiting",
+            "Now, they are waiting"
+          ],
+          "explanation": "Η σειρά είναι They are waiting now: πρόσωπο, are και ρήμα σε -ing.",
+          "tokens": [
+            "now",
+            "waiting",
+            "They",
+            "are"
+          ]
+        },
+        {
+          "id": "now-versus-habit",
+          "type": "multiple-choice",
+          "prompt": "Η Άννα διαβάζει ακριβώς αυτή τη στιγμή. Ποια πρόταση το δείχνει;",
+          "answer": "She is reading now.",
+          "acceptedAnswers": [
+            "She is reading now."
+          ],
+          "explanation": "Το She is reading now περιγράφει τι γίνεται τώρα. Το She reads every day περιγράφει συνήθεια.",
+          "choices": [
+            "She reads every day.",
+            "She is reading now.",
+            "She read every day."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a-day-with-anna",
+      "title": "Μια μέρα με την Άννα",
+      "subtitle": "Ενώνουμε τόπο, μετακίνηση και καθημερινές πράξεις",
+      "durationMinutes": 7,
+      "xp": 40,
+      "objective": "Βρίσκω συγκεκριμένες πληροφορίες σε μικρή ιστορία που συνδυάζει το προηγούμενο υλικό.",
+      "cards": [
+        {
+          "word": "in the morning",
+          "translation": "το πρωί",
+          "example": "In the morning, I read a book.",
+          "exampleTranslation": "Το πρωί διαβάζω ένα βιβλίο. Η φράση in the morning δείχνει το μέρος της ημέρας."
+        },
+        {
+          "word": "in the afternoon",
+          "translation": "το απόγευμα",
+          "example": "In the afternoon, I go to town by bus.",
+          "exampleTranslation": "Το απόγευμα πηγαίνω στην πόλη με λεωφορείο. Afternoon είναι το απόγευμα."
+        },
+        {
+          "word": "in the evening",
+          "translation": "το βράδυ",
+          "example": "In the evening, I cook at home.",
+          "exampleTranslation": "Το βράδυ μαγειρεύω στο σπίτι. Evening είναι το βράδυ, συνήθως πριν από την ώρα του ύπνου."
+        }
+      ],
+      "exercises": [
+        {
+          "id": "morning-room",
+          "type": "reading",
+          "prompt": "Σε ποιο δωμάτιο διαβάζει η Άννα το πρωί; Γράψε την αγγλική λέξη.",
+          "answer": "kitchen",
+          "acceptedAnswers": [
+            "kitchen",
+            "the kitchen",
+            "in the kitchen"
+          ],
+          "explanation": "Η πρώτη πρόταση λέει in the kitchen. Η ερώτηση ζητά το δωμάτιο, όχι τη δραστηριότητα ή το μέρος της ημέρας.",
+          "passage": "In the morning, Anna reads a book in the kitchen. In the afternoon, she goes to town by bus. In the evening, she cooks at home."
+        },
+        {
+          "id": "afternoon-transport",
+          "type": "reading",
+          "prompt": "Πώς πηγαίνει η Άννα στην πόλη το απόγευμα; Γράψε bus ή train.",
+          "answer": "bus",
+          "acceptedAnswers": [
+            "bus",
+            "by bus"
+          ],
+          "explanation": "Στη δεύτερη πρόταση βρίσκουμε by bus: πηγαίνει με λεωφορείο.",
+          "passage": "In the morning, Anna reads a book in the kitchen. In the afternoon, she goes to town by bus. In the evening, she cooks at home."
+        },
+        {
+          "id": "evening-action",
+          "type": "reading",
+          "prompt": "Τι κάνει η Άννα το βράδυ; Γράψε το αγγλικό ρήμα cook ή read στη σωστή μορφή για το she.",
+          "answer": "cooks",
+          "acceptedAnswers": [
+            "cooks",
+            "she cooks",
+            "she cooks at home"
+          ],
+          "explanation": "Η τελευταία πρόταση λέει she cooks at home. Με she στον απλό ενεστώτα γράφουμε cooks, με s.",
+          "passage": "In the morning, Anna reads a book in the kitchen. In the afternoon, she goes to town by bus. In the evening, she cooks at home."
         }
       ]
     }

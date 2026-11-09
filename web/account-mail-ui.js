@@ -2,7 +2,7 @@
 export function emailAvailability(status) {
   if (!status || status.loading) return 'Ελέγχουμε αν είναι διαθέσιμη η αποστολή email…';
   if (status.error) return 'Δεν μπορέσαμε να ελέγξουμε την αποστολή email. Δοκίμασε ξανά.';
-  return status.available ? 'Η αποστολή συνδέσμων λογαριασμού μέσω email είναι διαθέσιμη.' : 'Η αποστολή email δεν έχει ενεργοποιηθεί σε αυτή την εγκατάσταση. Δεν μπορεί να σταλεί σύνδεσμος τώρα.';
+  return status.available ? 'Η αποστολή συνδέσμων λογαριασμού μέσω email έχει ρυθμιστεί. Η παράδοση του μηνύματος δεν είναι εγγυημένη.' : 'Η αποστολή email δεν έχει ενεργοποιηθεί σε αυτή την εγκατάσταση. Δεν μπορεί να σταλεί σύνδεσμος τώρα.';
 }
 export function renderEmailStatus(status,h) {
   return `<div class="email-delivery-status"><p id="email-status" class="small-note" role="status">${h.escape(emailAvailability(status))}</p><button class="text-button" type="button" data-action="email-status-retry">Έλεγχος διαθεσιμότητας</button></div>`;

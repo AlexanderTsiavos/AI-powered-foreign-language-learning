@@ -667,7 +667,7 @@ class FeatureIntegrationTests(unittest.TestCase):
         self.assertTrue(self.client.request("GET", "/api/session")[1]["user"]["isAdmin"])
         overview = self.client.request("GET", "/api/admin/overview")
         self.assertEqual(overview[0], 200)
-        self.assertEqual(overview[1]["counts"]["publishedLessons"], 9)
+        self.assertEqual(overview[1]["counts"]["publishedLessons"], len(self.server.lessons()))
         self.assertNotIn("test@example.com", json.dumps(overview[1]))
         with self.server.db() as db:
             db.execute("UPDATE users SET role='student'")
@@ -698,7 +698,7 @@ class FeatureIntegrationTests(unittest.TestCase):
         copied = json.loads(json.dumps(lesson))
         copied["id"] = "extra-lesson"
         self.assertEqual(self.client.mutate("POST", "/api/admin/lessons", {"lesson": copied, "baseVersion": 0})[0], 200)
-        self.assertEqual(len(self.client.request("GET", "/api/curriculum")[1]["lessons"]), 9)
+        self.assertEqual(len(self.client.request("GET", "/api/curriculum")[1]["lessons"]), len(base["lessons"]))
         self.assertEqual(self.client.mutate("POST", "/api/admin/lessons/extra-lesson/publish", {"baseVersion": 1})[0], 200)
         self.assertEqual([item["id"] for item in self.client.request("GET", "/api/curriculum")[1]["lessons"]],
                          [item["id"] for item in base["lessons"]] + ["extra-lesson"])

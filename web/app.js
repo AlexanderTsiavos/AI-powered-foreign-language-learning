@@ -4,6 +4,7 @@ import {renderSupportPage,renderNotificationsPage} from './support-ui.js';
 import {renderAdminPage} from './admin-ui.js';
 import {emailAvailability,renderAccountEmail,renderMailPage} from './account-mail-ui.js';
 import {renderLegalPage} from './legal-ui.js';
+import {renderStudyRecommendation,renderStudyProgress,renderLessonMap} from './study-plan-ui.js';
 const app = document.querySelector('#app');
 const icons = {
   book: '<path d="M3 5c4-1 6 0 9 2 3-2 5-3 9-2v14c-4-1-6 0-9 2-3-2-5-3-9-2V5Zm9 2v14"/>',
@@ -55,7 +56,7 @@ async function api(path, {method = 'GET', body, signal} = {}) {
   if (!response.ok) { const error=new Error(data.error || 'Κάτι δεν πήγε καλά. Δοκίμασε ξανά.'); error.status=response.status; throw error; }
   return data;
 }
-async function refresh() { state.session = await api('session'); dashboardReview = null; }
+async function refresh() { state.session = await api('session'); dashboardReview = null; state.studyPlan=null; }
 let emailStatus = null;
 let mailView = null;
 const mailKinds = ['reset-request','reset-password','verify-email','confirm-email-change'];
@@ -174,16 +175,11 @@ function onboarding() {
   return shell(`<main id="main-content" class="page onboarding-page" tabindex="-1"><div class="page-intro"><span class="eyebrow">ΠΡΙΝ ΚΑΝΟΥΜΕ ΤΗΝ ΑΡΧΗ</span><h1>Μια διαδρομή στα μέτρα σου.</h1><p>Λίγα πράγματα για σένα, για να ξεκινήσουμε σωστά.</p></div><form id="onboarding-form" class="form-card wide-form"><div class="two-columns"><label>Η γλώσσα μου<select name="nativeLanguage"><option value="el">Ελληνικά</option></select></label><label>Θέλω να μάθω<select name="targetLanguage"><option value="en">Αγγλικά</option></select></label></div><label>Γιατί θέλεις να μάθεις αγγλικά;<select name="reason"><option value="travel">Για ταξίδια και νέες εμπειρίες</option><option value="work">Για τη δουλειά μου</option><option value="study">Για σπουδές</option><option value="personal">Για εμένα και την καθημερινότητά μου</option></select></label><fieldset><legend>Πόσο χρόνο θα ήθελες κάθε μέρα;</legend><div class="goal-options"><label><input type="radio" name="goalMinutes" value="5"><span>5 λεπτά<small>Μια μικρή αρχή</small></span></label><label><input type="radio" name="goalMinutes" value="10" checked><span>10 λεπτά<small>Ένας όμορφος ρυθμός</small></span></label><label><input type="radio" name="goalMinutes" value="15"><span>15 λεπτά<small>Ένα βήμα παραπάνω</small></span></label></div></fieldset><div class="info-box">${icon('book')}<p><strong>Ξεκινάμε από την αρχή, στο A1.</strong> Η δοκιμαστική έκδοση έχει ${state.curriculum.lessons.length} εισαγωγικά μαθήματα. Μπορείς να δοκιμάσεις και έξι εισαγωγικές ερωτήσεις, χωρίς αλλαγή επιπέδου ή πιστοποίηση. Οι υπόλοιπες γλώσσες θα ακολουθήσουν.</p></div><p id="form-error" class="form-error" role="alert" hidden></p><button class="button button-primary" type="submit">Στη δική μου διαδρομή ${icon('arrow')}</button></form></main>`);
 }
 function dashboard() {
-  const progress = state.session.progress;
-  const completed = progress.completedLessons || [];
-  const lessons = state.curriculum.lessons;
-  const next = lessons.find(lesson => !completed.includes(lesson.id));
+  const progress=state.session.progress,lessons=state.curriculum.lessons;
+  const completed=progress.completedLessons || [];
   loadDashboardReview();
-  return shell(`<main id="main-content" class="page dashboard-page" tabindex="-1"><div class="dashboard-heading"><div><span class="eyebrow">ΚΑΘΕ ΜΕΡΑ, ΛΙΓΟ ΠΙΟ ΚΟΝΤΑ</span><h1>Γεια σου, ${escape(state.session.user.name.split(' ')[0])}<span class="greeting-spark" aria-hidden="true">✳</span></h1><p>Η καλύτερη στιγμή για ένα μικρό βήμα είναι τώρα.</p></div><div class="daily-badge">${icon('sun')}<span>Ο στόχος σου<strong>${state.session.profile.goalMinutes} λεπτά / ημέρα</strong></span></div></div><div class="dashboard-columns"><div class="journey-column"><section class="continue-card"><span class="eyebrow">${next ? 'ΤΟ ΕΠΟΜΕΝΟ ΜΙΚΡΟ ΣΟΥ ΒΗΜΑ' : 'ΜΙΑ ΟΜΟΡΦΗ ΑΡΧΗ ΟΛΟΚΛΗΡΩΘΗΚΕ'}</span><h2>${next ? escape(next.title) : `Τα κατάφερες και στα ${lessons.length} μαθήματα!`}</h2><p>${next ? escape(next.subtitle) : 'Μπορείς να επαναλάβεις όποιο μάθημα θέλεις. Νέες ενότητες θα προστεθούν αργότερα.'}</p><a class="button button-cream" href="#lesson/${next ? next.id : lessons[0].id}">${next ? 'Συνέχεια μαθήματος' : 'Κάνε μια επανάληψη'} ${icon('arrow')}</a><span class="continue-decor" aria-hidden="true">Aa</span></section><section class="journey-section"><div class="section-heading"><div><span class="eyebrow">ΕΠΙΠΕΔΟ A1 · ΕΝΟΤΗΤΑ 01</span><h2>Οι βάσεις για κάθε αρχή.</h2></div><span class="count-pill">${completed.length} / ${lessons.length}</span></div><div class="lesson-path">${lessons.map((lesson,index) => {
-    const done = completed.includes(lesson.id);
-    const unlocked = index === 0 || completed.includes(lessons[index-1].id);
-    return `<article class="path-row ${done ? 'completed' : unlocked ? 'current' : 'locked'}"><span class="path-node">${done ? icon('check') : unlocked ? icon('book') : icon('lock')}</span><div class="path-card"><div class="path-meta">ΜΑΘΗΜΑ ${String(index+1).padStart(2,'0')} ${done ? '<span>Ολοκληρώθηκε</span>' : !unlocked ? '<span>Ανοίγει μετά το προηγούμενο</span>' : '<span>Η σειρά σου!</span>'}</div><h3>${escape(lesson.title)}</h3><p>${escape(lesson.subtitle)}</p><div class="path-bottom"><span>${icon('clock')} ${lesson.durationMinutes} λεπτά <span class="path-xp">· ${lesson.xp} XP</span></span>${unlocked ? `<a class="${done ? 'text-link' : 'button button-small button-primary'}" href="#lesson/${lesson.id}">${done ? 'Επανάληψη' : 'Ξεκίνα'} ${icon('arrow')}</a>` : '<span class="locked-label">Κλειδωμένο</span>'}</div></div></article>`;
-  }).join('')}</div></section></div><aside class="dashboard-side">${dashboardReviewCard()}<section class="side-card progress-mini"><div class="section-heading"><h3>Η αρχή σου σε αριθμούς</h3>${icon('chart')}</div><div class="progress-ring"><strong>${completed.length}<small>από ${lessons.length} μαθήματα</small></strong></div><div class="mini-stat-row"><span>Πόντοι εμπειρίας</span><strong>${progress.xp} XP</strong></div><div class="mini-stat-row"><span>Συνεχόμενες ημέρες</span><strong>${progress.streak}</strong></div><a class="text-link" href="#progress">Δες την πρόοδό σου ${icon('arrow')}</a></section><section class="side-card tip-card"><span class="tip-symbol" aria-hidden="true">“</span><h3>Δεν χρειάζεται να<br>είσαι τέλειος.</h3><p>Χρειάζεται μόνο να επιστρέφεις. Τα λάθη είναι μέρος της διαδρομής.</p><span class="eyebrow">ΜΙΑ ΜΙΚΡΗ ΥΠΕΝΘΥΜΙΣΗ</span></section><p class="side-disclaimer">Δοκιμαστική διαδρομή · ${lessons.length} μαθήματα A1<br>Η ολοκλήρωση δεν πιστοποιεί επίπεδο γλωσσομάθειας.</p></aside></div></main>`);
+  const plan=studyPlanView();
+  return shell(`<main id="main-content" class="page dashboard-page" tabindex="-1"><div class="dashboard-heading"><div><span class="eyebrow">ΚΑΘΕ ΜΕΡΑ, ΛΙΓΟ ΠΙΟ ΚΟΝΤΑ</span><h1>Γεια σου, ${escape(state.session.user.name.split(' ')[0])}<span class="greeting-spark" aria-hidden="true">✳</span></h1><p>Η καλύτερη στιγμή για ένα μικρό βήμα είναι τώρα.</p></div><div class="daily-badge">${icon('sun')}<span>Ο στόχος σου<strong>${state.session.profile.goalMinutes} λεπτά / ημέρα</strong></span></div></div><div class="dashboard-columns"><div class="journey-column">${renderStudyRecommendation(plan,{escape,icon})}${renderLessonMap(lessons,completed,{escape,icon})}</div><aside class="dashboard-side">${dashboardReviewCard()}<section class="side-card progress-mini"><div class="section-heading"><h3>Η αρχή σου σε αριθμούς</h3>${icon('chart')}</div><div class="progress-ring"><strong>${completed.length}<small>από ${lessons.length} μαθήματα</small></strong></div><div class="mini-stat-row"><span>Πόντοι εμπειρίας</span><strong>${progress.xp} XP</strong></div><div class="mini-stat-row"><span>Συνεχόμενες ημέρες</span><strong>${progress.streak}</strong></div><a class="text-link" href="#progress">Δες την πρόοδό σου ${icon('arrow')}</a></section><section class="side-card tip-card"><span class="tip-symbol" aria-hidden="true">“</span><h3>Δεν χρειάζεται να<br>είσαι τέλειος.</h3><p>Χρειάζεται μόνο να επιστρέφεις. Τα λάθη είναι μέρος της διαδρομής.</p><span class="eyebrow">ΜΙΑ ΜΙΚΡΗ ΥΠΕΝΘΥΜΙΣΗ</span></section><p class="side-disclaimer">Δοκιμαστική διαδρομή · ${lessons.length} εισαγωγικά μαθήματα A1<br>Η ολοκλήρωση δεν πιστοποιεί επίπεδο γλωσσομάθειας.</p></aside></div></main>`);
 }
 let pendingReviewAttempt = null;
 const athensDate = value => {
@@ -222,7 +218,7 @@ async function loadLessonCheckpoint(id, visit) {
   }
 }
 async function saveLessonTransition(patch) {
-  const id = state.lesson.id, visit = lessonVisit, userId = state.session.user.id;
+  const id = state.lesson.id, visit = lessonVisit, userId = state.session.user.id, epoch=authEpoch;
   const target = {lessonId:id,phase:state.phase,index:state.index,answers:[...state.answers],correct:state.correct,...patch};
   const status = document.querySelector('#lesson-save-status');
   if (status) status.textContent = 'Αποθηκεύεται η θέση σου…';
@@ -231,6 +227,7 @@ async function saveLessonTransition(patch) {
   pendingLessonSaves.set(key,request);
   try {
     await request;
+    invalidateStudyPlan(userId,epoch);
     if (!learningContext(id,visit,userId)) return false;
     Object.assign(state,{phase:target.phase,index:target.index,answers:[...target.answers],correct:target.correct,saved:true,feedback:target.correct ? {kind:'success',title:'Σωστά! Ένα ακόμη μικρό βήμα.',text:state.lesson.exercises[target.index].explanation} : null,resumed:false});
     render();
@@ -311,7 +308,7 @@ async function submitReviewAttempt() {
   const review = state.review;
   const item = review.queue[review.index];
   if (!item) return;
-  const visit = review.visit, userId = state.session.user.id;
+  const visit = review.visit, userId = state.session.user.id, epoch=authEpoch;
   if (!review.pending) {
     const answer = String(document.querySelector('#review-answer')?.value || '').trim();
     if (!answer) return;
@@ -328,7 +325,7 @@ async function submitReviewAttempt() {
   try {
     const result = await api('review',{method:'POST',body:{lessonId:pending.lessonId,exerciseId:pending.exerciseId,answer:pending.answer,attemptId:pending.attemptId}});
     if (pendingReviewAttempt === pending) pendingReviewAttempt = null;
-    dashboardReview = null;
+    invalidateStudyPlan(userId,epoch);
     if (!reviewMatches(visit,userId)) return;
     Object.assign(review,{pending:null,result,error:null});
     const source = review.items.find(entry=>entry.lessonId === item.lessonId && entry.exerciseId === item.exerciseId);
@@ -346,7 +343,7 @@ function lessonView(id) {
   const lessons = state.curriculum.lessons;
   const lesson = lessons.find(item => item.id === id);
   const pos = lessons.findIndex(item => item.id === id);
-  if (!lesson || (pos > 0 && !state.session.progress.completedLessons.includes(lessons[pos-1].id))) return shell(`<main class="page" id="main-content"><h1>Ένα βήμα τη φορά.</h1><p>Αυτό το μάθημα ανοίγει όταν ολοκληρώσεις το προηγούμενο.</p><a class="button button-primary" href="#dashboard">Πίσω στη διαδρομή</a></main>`);
+  if (!lesson || (pos > 0 && !lessons.slice(0,pos).every(previous=>state.session.progress.completedLessons.includes(previous.id)))) return shell(`<main class="page" id="main-content"><h1>Ένα βήμα τη φορά.</h1><p>Αυτό το μάθημα ανοίγει όταν ολοκληρώσεις το προηγούμενο.</p><a class="button button-primary" href="#dashboard">Πίσω στη διαδρομή</a></main>`);
   if (state.lesson?.id !== id) {
     state = {...state,lesson,phase:'cards',index:0,answers:[],correct:false,feedback:null,micConsent:false,resumed:false,saved:false,checkpointLoaded:false,checkpointError:null};
     loadLessonCheckpoint(id, ++lessonVisit);
@@ -357,7 +354,7 @@ function lessonView(id) {
   const current = isExercise ? lesson.exercises[state.index] : lesson.cards[state.index];
   const total = lesson.cards.length + lesson.exercises.length;
   const position = isExercise ? lesson.cards.length + state.index : state.index;
-  return shell(`<main id="main-content" class="page lesson-page" tabindex="-1"><div class="lesson-toolbar"><a class="text-link" href="#dashboard">← Πίσω στη διαδρομή</a><span>ΜΑΘΗΜΑ ${pos+1} · ${escape(lesson.title)}</span></div><div class="lesson-progress" role="progressbar" aria-label="Πρόοδος μαθήματος" aria-valuenow="${position}" aria-valuemin="0" aria-valuemax="${total}"><span class="progress-step step-${position}"></span></div><p id="lesson-save-status" class="save-status" role="status" aria-live="polite">${state.resumed ? 'Συνεχίζεις από την τελευταία αποθηκευμένη θέση σου.' : state.saved ? 'Η θέση σου αποθηκεύτηκε στον λογαριασμό σου.' : 'Η θέση σου αποθηκεύεται καθώς προχωράς.'}</p><div class="lesson-title"><div><span class="eyebrow">${isExercise ? 'Η ΣΕΙΡΑ ΣΟΥ ΝΑ ΔΟΚΙΜΑΣΕΙΣ' : 'ΑΣ ΑΝΑΚΑΛΥΨΟΥΜΕ ΚΑΤΙ ΝΕΟ'}</span><h1>${isExercise ? 'Μικρή εξάσκηση, μεγάλη διαφορά.' : 'Βλέπω. Ακούω. Μαθαίνω.'}</h1></div><span class="count-pill">${state.index+1} / ${isExercise ? lesson.exercises.length : lesson.cards.length}</span></div><div class="classroom-grid"><section class="whiteboard" aria-label="Διαδραστικός εκπαιδευτικός πίνακας"><div class="board-topline"><span class="tiny-dot"></span> Ο ΠΙΝΑΚΑΣ ΣΟΥ <span>${isExercise ? 'ΕΞΑΣΚΗΣΗ' : 'ΑΝΑΚΑΛΥΨΗ'}</span></div>${isExercise ? exerciseContent(current) : `<div class="word-presentation">${current.image ? `<img class="word-image" src="${escape(current.image)}" alt="${escape(current.translation)}">` : `<div class="letter-illustration" aria-hidden="true">${state.index === 0 ? 'Aa' : state.index === 1 ? 'Bb' : 'Cc'}<span>✳</span></div>`}<h2 lang="en">${escape(current.word)}</h2><p class="word-translation">${escape(current.translation)}</p><button class="button button-outline button-small" data-action="speak-card">${icon('voice')} Άκου τη φράση</button><p class="pronunciation">Περίπου: ${escape(current.pronunciation)} <span>· Ενδεικτική βοήθεια, όχι φωνητική μεταγραφή</span></p><div class="example-box"><strong lang="en">${escape(current.example)}</strong><span>${escape(current.exampleTranslation)}</span></div></div>`}</section><aside class="teacher-panel"><div class="teacher-heading"><span class="teacher-mark">${icon('book')}</span><span><strong>Μαζί, βήμα βήμα</strong><small>Δοκιμαστικός καθηγητής</small></span></div><span class="demo-pill">Προκαθορισμένες εξηγήσεις</span><div class="teacher-message"><p>${isExercise ? 'Τώρα δοκίμασε μόνος σου. Γράψε την απάντησή σου στα αγγλικά. Αν δυσκολευτείς, υπάρχει μια μικρή βοήθεια.' : state.index === 0 ? `Καλώς ήρθες! ${escape(lesson.objective)} Παρατήρησε τον πίνακα και άκου τη λέξη ή τη φράση όταν είσαι έτοιμος.` : 'Δες το νέο παράδειγμα στον πίνακα. Μπορείς να το ακούσεις όσες φορές θέλεις, πριν συνεχίσεις.'}</p></div>${isExercise ? `<button class="button button-outline button-full" data-action="hint">Χρειάζομαι μια βοήθεια ${icon('help')}</button><p id="hint-text" class="hint-text" hidden>${escape(current.hint)}</p>` : `<div class="teacher-tip">${icon('sun')}<p>Πες τη φράση δυνατά, ακόμη κι αν δεν ακούγεται τέλεια στην αρχή.</p></div>`}<p class="small-note">Δεν υπάρχει ακόμη ελεύθερος διάλογος με AI ή αξιολόγηση προφοράς. Οι εξηγήσεις αυτού του μαθήματος είναι γραμμένες εκ των προτέρων.</p></aside></div>${!isExercise ? `<div class="lesson-actions"><span class="quiet">Χωρίς βιασύνη. Ο ρυθμός είναι δικός σου.</span><button class="button button-primary" data-action="next-card">${state.index === lesson.cards.length-1 ? 'Πάμε για εξάσκηση' : 'Επόμενο παράδειγμα'} ${icon('arrow')}</button></div>` : ''}</main>`, {lesson:true});
+  return shell(`<main id="main-content" class="page lesson-page" tabindex="-1"><div class="lesson-toolbar"><a class="text-link" href="#dashboard">← Πίσω στη διαδρομή</a><span>ΜΑΘΗΜΑ ${pos+1} · ${escape(lesson.title)}</span></div><div class="lesson-progress" role="progressbar" aria-label="Πρόοδος μαθήματος" aria-valuenow="${position}" aria-valuemin="0" aria-valuemax="${total}"><span class="progress-step step-${position}"></span></div><p id="lesson-save-status" class="save-status" role="status" aria-live="polite">${state.resumed ? 'Συνεχίζεις από την τελευταία αποθηκευμένη θέση σου.' : state.saved ? 'Η θέση σου αποθηκεύτηκε στον λογαριασμό σου.' : 'Η θέση σου αποθηκεύεται καθώς προχωράς.'}</p><div class="lesson-title"><div><span class="eyebrow">${isExercise ? 'Η ΣΕΙΡΑ ΣΟΥ ΝΑ ΔΟΚΙΜΑΣΕΙΣ' : 'ΑΣ ΑΝΑΚΑΛΥΨΟΥΜΕ ΚΑΤΙ ΝΕΟ'}</span><h1>${isExercise ? 'Μικρή εξάσκηση, μεγάλη διαφορά.' : 'Βλέπω. Ακούω. Μαθαίνω.'}</h1></div><span class="count-pill">${state.index+1} / ${isExercise ? lesson.exercises.length : lesson.cards.length}</span></div><div class="classroom-grid"><section class="whiteboard" aria-label="Διαδραστικός εκπαιδευτικός πίνακας"><div class="board-topline"><span class="tiny-dot"></span> Ο ΠΙΝΑΚΑΣ ΣΟΥ <span>${isExercise ? 'ΕΞΑΣΚΗΣΗ' : 'ΑΝΑΚΑΛΥΨΗ'}</span></div>${isExercise ? exerciseContent(current) : `<div class="word-presentation">${current.image ? `<img class="word-image" src="${escape(current.image)}" alt="${escape(current.translation)}">` : `<div class="letter-illustration" aria-hidden="true">${state.index === 0 ? 'Aa' : state.index === 1 ? 'Bb' : 'Cc'}<span>✳</span></div>`}<h2 lang="en">${escape(current.word)}</h2><p class="word-translation">${escape(current.translation)}</p><button class="button button-outline button-small" data-action="speak-card">${icon('voice')} Άκου τη φράση</button>${current.pronunciation ? `<p class="pronunciation">Περίπου: ${escape(current.pronunciation)} <span>· Ενδεικτική βοήθεια, όχι φωνητική μεταγραφή</span></p>` : ''}<div class="example-box"><strong lang="en">${escape(current.example)}</strong><span>${escape(current.exampleTranslation)}</span></div></div>`}</section><aside class="teacher-panel"><div class="teacher-heading"><span class="teacher-mark">${icon('book')}</span><span><strong>Μαζί, βήμα βήμα</strong><small>Δοκιμαστικός καθηγητής</small></span></div><span class="demo-pill">Προκαθορισμένες εξηγήσεις</span><div class="teacher-message"><p>${isExercise ? 'Τώρα δοκίμασε μόνος σου. Γράψε την απάντησή σου στα αγγλικά. Αν δυσκολευτείς, υπάρχει μια μικρή βοήθεια.' : state.index === 0 ? `Καλώς ήρθες! ${escape(lesson.objective)} Παρατήρησε τον πίνακα και άκου τη λέξη ή τη φράση όταν είσαι έτοιμος.` : 'Δες το νέο παράδειγμα στον πίνακα. Μπορείς να το ακούσεις όσες φορές θέλεις, πριν συνεχίσεις.'}</p></div>${isExercise ? `<button class="button button-outline button-full" data-action="hint">Χρειάζομαι μια βοήθεια ${icon('help')}</button><p id="hint-text" class="hint-text" hidden>${escape(current.hint)}</p>` : `<div class="teacher-tip">${icon('sun')}<p>Πες τη φράση δυνατά, ακόμη κι αν δεν ακούγεται τέλεια στην αρχή.</p></div>`}<p class="small-note">Δεν υπάρχει ακόμη ελεύθερος διάλογος με AI ή αξιολόγηση προφοράς. Οι εξηγήσεις αυτού του μαθήματος είναι γραμμένες εκ των προτέρων.</p></aside></div>${!isExercise ? `<div class="lesson-actions"><span class="quiet">Χωρίς βιασύνη. Ο ρυθμός είναι δικός σου.</span><button class="button button-primary" data-action="next-card">${state.index === lesson.cards.length-1 ? 'Πάμε για εξάσκηση' : 'Επόμενο παράδειγμα'} ${icon('arrow')}</button></div>` : ''}</main>`, {lesson:true});
 }
 function exerciseContent(exercise) {
   const typeLabel={'gap':'ΣΥΜΠΛΗΡΩΣΗ ΚΕΝΟΥ','multiple-choice':'ΕΠΙΛΟΓΗ ΑΠΑΝΤΗΣΗΣ','word-order':'ΒΑΛΕ ΤΙΣ ΛΕΞΕΙΣ ΣΤΗ ΣΕΙΡΑ','reading':'ΚΑΤΑΝΟΗΣΗ ΚΕΙΜΕΝΟΥ','listening':'ΑΚΡΟΑΣΗ Ή ΕΝΑΛΛΑΚΤΙΚΑ ΑΝΑΓΝΩΣΗ'}[exercise.type] || 'ΓΡΑΠΤΗ Ή ΠΡΟΦΟΡΙΚΗ ΑΠΑΝΤΗΣΗ';
@@ -368,9 +365,10 @@ function completedLesson() {
   return shell(`<main id="main-content" class="page completion-page" tabindex="-1"><div class="completion-art" aria-hidden="true">${icon('check')}<span>✳</span><i>✦</i></div><span class="eyebrow">ΚΑΘΕ ΜΙΚΡΟ ΒΗΜΑ ΜΕΤΡΑΕΙ</span><h1>Μπράβο, το ολοκλήρωσες!</h1><p>Το μάθημα «${escape(lesson.title)}» αποθηκεύτηκε<br>στον λογαριασμό σου.</p><div class="completion-stats"><span>${icon('check')}<strong>${lesson.exercises.length} απαντήσεις</strong><small>Δοκιμάστηκαν σωστά</small></span><span>${icon('star')}<strong>${state.session.progress.xp} XP</strong><small>Συνολικοί πόντοι</small></span></div><p class="small-note">Οι πόντοι προστίθενται μία φορά ανά μάθημα.<br>Οι επαναλήψεις είναι πάντα διαθέσιμες.</p><a class="button button-primary" href="#dashboard">Πίσω στη διαδρομή μου ${icon('arrow')}</a></main>`);
 }
 function progressView() {
+  const plan=studyPlanView();
   const completed = state.session.progress.completedLessons;
   const words = state.curriculum.lessons.filter(lesson => completed.includes(lesson.id)).flatMap(lesson => lesson.cards);
-  return shell(`<main id="main-content" class="page" tabindex="-1"><div class="page-intro"><span class="eyebrow">ΟΛΑ ΤΑ ΜΙΚΡΑ ΣΟΥ ΒΗΜΑΤΑ</span><h1>Η πρόοδός σου, με μια ματιά.</h1><p>Όσα ολοκλήρωσες σε αυτή τη δοκιμαστική διαδρομή. <a href="#review">Κάνε μια μικρή επανάληψη.</a></p></div><div class="stats-grid"><section class="stat-card">${icon('book')}<strong>${completed.length} / ${state.curriculum.lessons.length}</strong><span>Ολοκληρωμένα μαθήματα</span></section><section class="stat-card">${icon('star')}<strong>${state.session.progress.xp} XP</strong><span>Πόντοι εμπειρίας</span></section><section class="stat-card">${icon('flame')}<strong>${state.session.progress.streak}</strong><span>Συνεχόμενες ημέρες</span></section></div><section class="side-card words-section"><div class="section-heading"><div><span class="eyebrow">ΜΙΑ ΜΙΚΡΗ ΕΠΑΝΑΛΗΨΗ</span><h2>Οι λέξεις και οι φράσεις σου.</h2></div></div>${words.length ? `<div class="vocabulary-grid">${words.map(word => `<div class="vocabulary-item"><strong lang="en">${escape(word.word)}</strong><span>${escape(word.translation)}</span><button class="round-button" data-speak="${escape(word.word)}" aria-label="Άκου: ${escape(word.word)}">${icon('voice')}</button></div>`).join('')}</div>` : '<div class="empty-state"><p>Η συλλογή σου ξεκινά με το πρώτο μάθημα.</p><a class="button button-primary" href="#dashboard">Κάνε την αρχή</a></div>'}<p class="small-note">Η λίστα δείχνει το υλικό των ολοκληρωμένων μαθημάτων. Δεν αποτελεί μέτρηση απομνημόνευσης ή πιστοποίηση γλωσσομάθειας. Η σειρά ημερών βασίζεται στην ώρα Αθήνας.</p></section></main>`);
+  return shell(`<main id="main-content" class="page" tabindex="-1"><div class="page-intro"><span class="eyebrow">ΟΛΑ ΤΑ ΜΙΚΡΑ ΣΟΥ ΒΗΜΑΤΑ</span><h1>Η πρόοδός σου, με μια ματιά.</h1><p>Όσα ολοκλήρωσες σε αυτή τη δοκιμαστική διαδρομή. <a href="#review">Κάνε μια μικρή επανάληψη.</a></p></div><div class="stats-grid"><section class="stat-card">${icon('book')}<strong>${completed.length} / ${state.curriculum.lessons.length}</strong><span>Ολοκληρωμένα μαθήματα</span></section><section class="stat-card">${icon('star')}<strong>${state.session.progress.xp} XP</strong><span>Πόντοι εμπειρίας</span></section><section class="stat-card">${icon('flame')}<strong>${state.session.progress.streak}</strong><span>Συνεχόμενες ημέρες</span></section></div>${renderStudyProgress(plan,{escape,icon})}<section class="side-card words-section"><div class="section-heading"><div><span class="eyebrow">ΜΙΑ ΜΙΚΡΗ ΕΠΑΝΑΛΗΨΗ</span><h2>Οι λέξεις και οι φράσεις σου.</h2></div></div>${words.length ? `<div class="vocabulary-grid">${words.map(word => `<div class="vocabulary-item"><strong lang="en">${escape(word.word)}</strong><span>${escape(word.translation)}</span><button class="round-button" data-speak="${escape(word.word)}" aria-label="Άκου: ${escape(word.word)}">${icon('voice')}</button></div>`).join('')}</div>` : '<div class="empty-state"><p>Η συλλογή σου ξεκινά με το πρώτο μάθημα.</p><a class="button button-primary" href="#dashboard">Κάνε την αρχή</a></div>'}<p class="small-note">Η λίστα δείχνει το υλικό των ολοκληρωμένων μαθημάτων. Δεν αποτελεί μέτρηση απομνημόνευσης ή πιστοποίηση γλωσσομάθειας. Η σειρά ημερών βασίζεται στην ώρα Αθήνας.</p></section></main>`);
 }
 let authEpoch = 0;
 let settingsVisit = 0;
@@ -383,7 +381,7 @@ function resetPrivateViews() {
   if (teacherController) { teacherController.abort(); teacherController = null; }
   state.lesson = null; state.review = null; state.teacher = null;
   pendingReviewAttempt = null; accountSessions = null; dashboardReview = null;
-  state.assessment=null; state.support=null; state.notifications=null; state.admin=null; notificationSummary=null;
+  state.assessment=null; state.support=null; state.notifications=null; state.admin=null; state.studyPlan=null; notificationSummary=null;
 }
 function accountMatches(userId,epoch) { return state.session.user?.id === userId && authEpoch === epoch; }
 function loadAccountSessions() {
@@ -495,6 +493,26 @@ function newFeature(name,extra={}) {
 }
 function featureMatches(name,entry) {
   return state[name]===entry && accountMatches(entry.userId,entry.epoch) && location.hash===entry.route;
+}
+function invalidateStudyPlan(userId,epoch) {
+  if(!accountMatches(userId,epoch)) return;
+  state.studyPlan=null; dashboardReview=null;
+  if(['#dashboard','#progress'].includes(location.hash)) render();
+}
+function beginStudyPlanLoad() {
+  const view=newFeature('studyPlan',{data:null});
+  api('study-plan').then(data=>{
+    if(!featureMatches('studyPlan',view)) return;
+    Object.assign(view,{loading:false,data}); render();
+  }).catch(error=>{
+    if(!featureMatches('studyPlan',view)) return;
+    Object.assign(view,{loading:false,error:error.message}); render();
+  });
+}
+function studyPlanView() {
+  const view=state.studyPlan;
+  if(!view || !featureMatches('studyPlan',view)) beginStudyPlanLoad();
+  return state.studyPlan;
 }
 function updateNotificationBadge() {
   const badge=document.querySelector('#notification-badge'),bell=document.querySelector('#notification-bell');
@@ -777,6 +795,7 @@ function render() {
   if (route !== 'review' && state.review) { state.review = null; reviewVisit++; }
   if (route !== 'settings' && accountSessions) { accountSessions=null; settingsVisit++; }
   if (route !== 'teacher' && state.teacher) { teacherVisit++; if (teacherController) { teacherController.abort(); teacherController=null; } state.teacher=null; }
+  if(!['dashboard','progress'].includes(route)) state.studyPlan=null;
   if(route!=='assessments') state.assessment=null;
   if(route!=='support' && !route.startsWith('support/')) state.support=null;
   if(route!=='notifications') state.notifications=null;
@@ -898,7 +917,7 @@ app.addEventListener('submit', event => {
           const id = state.lesson.id, visit = lessonVisit, userId = state.session.user.id, answers = [...state.answers];
           try {
             const session = await api('progress',{method:'POST',body:{lessonId:id,answers}});
-            dashboardReview = null;
+            dashboardReview = null; state.studyPlan=null;
             if (state.session.user?.id !== userId) return;
             const stillInLesson = learningContext(id,visit,userId);
             state.session = session;
@@ -943,6 +962,7 @@ app.addEventListener('click', async event => {
   if (!button || button.disabled) return;
   const action = button.dataset.action;
   if(action==='email-status-retry') { if(!busy) loadEmailStatus(true); }
+  else if(action==='study-plan-retry') { beginStudyPlanLoad(); render(); }
   else if(action==='assessment-catalog') { if(!busy) { beginAssessmentLoad(); render(); } }
   else if(action==='assessment-start') await startAssessment(button.dataset.kind,button.dataset.unitId,button);
   else if(action==='assessment-back') {

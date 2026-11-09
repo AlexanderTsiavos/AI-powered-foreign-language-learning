@@ -12,6 +12,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app_errors import ServiceError
+from email_addresses import normalize_email
 from mailer import MailMessage
 
 
@@ -37,12 +38,10 @@ def _digest(value):
 
 
 def _email(value):
-    if not isinstance(value, str):
-        raise ServiceError(400, "Συμπλήρωσε έγκυρο email.")
-    value = value.strip().casefold()
-    if len(value) > 254 or not re.fullmatch(r"[^\s@<>\x00-\x1f]+@[^\s@<>\x00-\x1f]+\.[^\s@<>\x00-\x1f]+", value):
-        raise ServiceError(400, "Συμπλήρωσε έγκυρο email.")
-    return value
+    try:
+        return normalize_email(value)
+    except ValueError:
+        raise ServiceError(400, "Συμπλήρωσε έγκυρο email.") from None
 
 
 class EmailAuthService:

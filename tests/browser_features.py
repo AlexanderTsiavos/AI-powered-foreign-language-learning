@@ -116,6 +116,9 @@ def run():
             for lesson in curriculum['lessons'][3:]:
                 page.goto(url + '/#lesson/' + lesson['id'])
                 expect(page.locator('.whiteboard')).to_be_visible()
+                if not lesson['cards'][0].get('pronunciation'):
+                    expect(page.locator('.pronunciation')).to_have_count(0)
+                    assert 'undefined' not in page.locator('.whiteboard').inner_text()
                 for _ in lesson['cards']:
                     page.locator('[data-action=next-card]').click()
                 for exercise in lesson['exercises']:
@@ -142,8 +145,8 @@ def run():
                     page.locator('#exercise-form button[type=submit]').click()
                 expect(page.locator('.completion-page')).to_be_visible()
             assert {'multiple-choice', 'word-order', 'reading', 'listening'}.issubset(covered)
-            assert len(session(context, url)['progress']['completedLessons']) == 9
-            print('PASS all six new lessons and four new exercise types through the real UI', flush=True)
+            assert len(session(context, url)['progress']['completedLessons']) == len(curriculum['lessons'])
+            print(f"PASS all {len(curriculum['lessons'])-3} later lessons and varied exercise types through the real UI", flush=True)
 
             model = ThreadingHTTPServer(('127.0.0.1', 11434), LocalModelFixture)
             model_thread = threading.Thread(target=model.serve_forever, daemon=True)

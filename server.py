@@ -26,13 +26,18 @@ from app_errors import ServiceError
 from assessment import AssessmentService
 from content_admin import ContentAdminService
 from email_auth import EmailAuthService
+from email_addresses import is_mailbox
 from mailer import Mailer
+from session_limits import AnonymousSessionQuota
 from support import SupportService
+from study_plan import StudyPlanService
 from teacher import TeacherError, TeacherService
 
 ROOT = Path(__file__).resolve().parent
 COOKIE = "academy_session"
 SESSION_TTL = 7 * 24 * 60 * 60
+ANONYMOUS_SESSION_TTL = 30 * 60
+MAX_ANONYMOUS_SESSIONS = 1000
 MAX_BODY = 32 * 1024
 REVIEW_INTERVAL_DAYS = (1, 3, 7, 14, 30)
 REVIEW_ATTEMPT_LIMIT = 1000
@@ -106,11 +111,13 @@ class AcademyState:
         self.app_origin = app_origin
         self.rate_lock = threading.Lock()
         self.auth_attempts: dict[str, list[float]] = {}
+        self.anonymous_quota = AnonymousSessionQuota()
         self.dummy_password = password_hash(secrets.token_urlsafe(32))
         self.teacher = TeacherService.from_env()
         self.content = ContentAdminService(self.db, self.root, self.base_curriculum)
         self.assessments = AssessmentService(self.db, self.curriculum, answer_matches)
         self.support = SupportService(self.db)
+        self.study_plan = StudyPlanService(self.db, self.curriculum, activity_day, utc_now)
         self.mailer = Mailer.from_env()
         self.email_auth = EmailAuthService(self.db, self.mailer, password_hash, password_matches)
         self._closed = False
@@ -193,6 +200,9 @@ class AcademyState:
                            (row["public_id"] or secrets.token_urlsafe(18), created_at,
                             row["last_seen_at"] or created_at, row["token_hash"]))
             db.execute("CREATE UNIQUE INDEX IF NOT EXISTS sessions_public_id ON sessions(public_id)")
+            db.execute("UPDATE sessions SET expires=MIN(expires,?) WHERE user_id IS NULL",
+                       (time.time() + ANONYMOUS_SESSION_TTL,))
+            self.trim_anonymous_sessions(db)
             self.content.initialize(db)
             self.assessments.initialize(db)
             self.support.initialize(db)
@@ -207,6 +217,15 @@ class AcademyState:
                     if lesson:
                         self.seed_reviews(db, completion["user_id"], lesson, completion["completed_at"])
         os.chmod(self.db_path, 0o600)
+
+    @staticmethod
+    def trim_anonymous_sessions(db, reserve=0):
+        # Called in an existing writer transaction: concurrent inserts cannot
+        # both observe an available slot. Signed-in sessions are never removed.
+        db.execute("""DELETE FROM sessions WHERE user_id IS NULL AND token_hash NOT IN
+            (SELECT token_hash FROM sessions WHERE user_id IS NULL
+             ORDER BY expires DESC,created_at DESC,token_hash DESC LIMIT ?)""",
+                   (MAX_ANONYMOUS_SESSIONS - reserve,))
 
     def base_curriculum(self):
         path = self.root / "data" / "curriculum.json"
@@ -323,7 +342,8 @@ class AcademyHandler(BaseHTTPRequestHandler):
         if self.server.secure_cookies:
             self.send_header("Strict-Transport-Security", "max-age=31536000")
         if getattr(self, "new_cookie", None) is not None:
-            cookie = f"{COOKIE}={self.new_cookie}; Path=/; HttpOnly; SameSite=Lax; Max-Age={SESSION_TTL}"
+            ttl = getattr(self, "new_cookie_ttl", SESSION_TTL)
+            cookie = f"{COOKIE}={self.new_cookie}; Path=/; HttpOnly; SameSite=Lax; Max-Age={ttl}"
             if self.server.secure_cookies:
                 cookie += "; Secure"
             self.send_header("Set-Cookie", cookie)
@@ -396,6 +416,7 @@ class AcademyHandler(BaseHTTPRequestHandler):
         row = db.execute("SELECT * FROM sessions WHERE token_hash=? AND expires>?",
                          (token_digest(token), time.time())).fetchone() if token else None
         if row is None and create:
+            self.server.anonymous_quota.consume(self.client_address[0])
             row = self.new_session(db)
         return row
 
@@ -403,13 +424,17 @@ class AcademyHandler(BaseHTTPRequestHandler):
         if old_hash:
             db.execute("DELETE FROM sessions WHERE token_hash=?", (old_hash,))
         db.execute("DELETE FROM sessions WHERE expires<=?", (time.time(),))
+        ttl = SESSION_TTL if user_id is not None else ANONYMOUS_SESSION_TTL
+        if user_id is None:
+            self.server.trim_anonymous_sessions(db, reserve=1)
         token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
         digest = token_digest(token)
         created_at = now_iso()
         db.execute("""INSERT INTO sessions(token_hash,user_id,csrf,expires,public_id,created_at,last_seen_at)
-                   VALUES(?,?,?,?,?,?,?)""", (digest, user_id, csrf, time.time()+SESSION_TTL,
+                   VALUES(?,?,?,?,?,?,?)""", (digest, user_id, csrf, time.time()+ttl,
                                              secrets.token_urlsafe(18), created_at, created_at))
         self.new_cookie = token
+        self.new_cookie_ttl = ttl
         return db.execute("SELECT * FROM sessions WHERE token_hash=?", (digest,)).fetchone()
 
     def touch_session(self, db, session):
@@ -509,6 +534,10 @@ class AcademyHandler(BaseHTTPRequestHandler):
                 session = self.session(db)
                 user_id = self.require_user(session)
                 result = self.review_payload(db, user_id)
+            elif method == "GET" and path == "/api/study-plan":
+                session = self.session(db)
+                user_id = self.require_user(session)
+                result = self.server.study_plan.get(user_id)
             elif method == "GET" and path == "/api/account/sessions":
                 session = self.session(db)
                 self.require_user(session)
@@ -613,6 +642,8 @@ class AcademyHandler(BaseHTTPRequestHandler):
             if len(email) > 254 or not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email) or len(password) > 256:
                 raise APIError(400, "Συμπλήρωσε έγκυρο email και κωδικό.")
             if path == "/api/register":
+                if not is_mailbox(email):
+                    raise APIError(400, "Συμπλήρωσε έγκυρο email χωρίς όνομα εμφάνισης ή ειδική σύνταξη.")
                 name = data.get("name", "")
                 if not isinstance(name, str) or not 2 <= len(name.strip()) <= 80 or len(password) < 10:
                     raise APIError(400, "Χρειάζεται όνομα 2–80 χαρακτήρων και κωδικός τουλάχιστον 10 χαρακτήρων.")

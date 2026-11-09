@@ -149,12 +149,12 @@ def run():
             with control.expect_response('**/api/admin/lessons') as saved:
                 control.locator('#admin-lesson-form button[type=submit]').click()
             assert saved.value.ok, saved.value.text()
-            assert len(student.request.get(url + '/api/curriculum').json()['lessons']) == 9
+            assert len(student.request.get(url + '/api/curriculum').json()['lessons']) == len(curriculum['lessons'])
             expect(control.locator('[data-action=admin-publish]')).to_be_enabled()
             control.locator('[data-action=admin-publish]').click()
             expect(control.locator('#toast')).to_contain_text('δημοσιεύ')
             published = student.request.get(url + '/api/curriculum').json()['lessons']
-            assert len(published) == 10 and published[-1]['id'] == draft['id']
+            assert len(published) == len(curriculum['lessons']) + 1 and published[-1]['id'] == draft['id']
             control.screenshot(path=str(artifacts / 'admin-desktop.png'), full_page=True)
             print('PASS admin draft remains private until explicit publication', flush=True)
 
@@ -170,7 +170,7 @@ def run():
             check_thread = threading.Thread(target=check.serve_forever, daemon=True)
             check_thread.start()
             try:
-                assert len(check.curriculum()['lessons']) == 10
+                assert len(check.curriculum()['lessons']) == len(curriculum['lessons']) + 1
                 restored_client = Client(check.server_port)
                 restored_client.request('GET', '/api/session')
                 status, restored_session, _ = restored_client.mutate('POST', '/api/login', {'email': 'student@example.test', 'password': 'operations unique password 42'})

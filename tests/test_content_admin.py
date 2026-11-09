@@ -82,7 +82,7 @@ class ContentAdminTests(unittest.TestCase):
         second["id"] = "new-second"
         self.draft(first, create=True)
         self.draft(second, create=True)
-        self.assertEqual(len(self.service.public_curriculum(self.base)["lessons"]), 9)
+        self.assertEqual(len(self.service.public_curriculum(self.base)["lessons"]), len(self.base["lessons"]))
         self.service.publish("admin", second["id"], {"baseVersion": 1})
         self.service.publish("admin", first["id"], {"baseVersion": 1})
         self.assertEqual([lesson["id"] for lesson in self.service.public_curriculum(self.base)["lessons"]][-2:],

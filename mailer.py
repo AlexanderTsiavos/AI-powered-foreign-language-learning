@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from email.message import EmailMessage
-from email.utils import parseaddr
 import ipaddress
 import os
 import queue
@@ -15,16 +14,14 @@ from urllib.parse import urlsplit
 
 from app_errors import ServiceError
 from app_origin import canonical_origin
+from email_addresses import is_mailbox
 
 
 UNAVAILABLE = "Η υπηρεσία email δεν είναι διαθέσιμη. Δοκίμασε αργότερα."
 
 
 def _mailbox(value):
-    if not isinstance(value, str) or len(value) > 254 or any(c in value for c in "\r\n\x00"):
-        return False
-    name, address = parseaddr(value)
-    return not name and address == value and bool(re.fullmatch(r"[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+", value))
+    return is_mailbox(value)
 
 
 def _origin(value, production):
