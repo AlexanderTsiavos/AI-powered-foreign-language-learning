@@ -27,7 +27,9 @@ from assessment import AssessmentService
 from content_admin import ContentAdminService
 from email_auth import EmailAuthService
 from email_addresses import is_mailbox
+from learner_library import LearnerLibraryService
 from mailer import Mailer
+from practice_insights import PracticeInsightsService
 from session_limits import AnonymousSessionQuota
 from support import SupportService
 from study_plan import StudyPlanService
@@ -118,6 +120,8 @@ class AcademyState:
         self.assessments = AssessmentService(self.db, self.curriculum, answer_matches)
         self.support = SupportService(self.db)
         self.study_plan = StudyPlanService(self.db, self.curriculum, activity_day, utc_now)
+        self.library = LearnerLibraryService(self.db, self.curriculum)
+        self.practice_insights = PracticeInsightsService(self.db, self.curriculum, attempt_limit=REVIEW_ATTEMPT_LIMIT)
         self.mailer = Mailer.from_env()
         self.email_auth = EmailAuthService(self.db, self.mailer, password_hash, password_matches)
         self._closed = False
@@ -206,6 +210,7 @@ class AcademyState:
             self.content.initialize(db)
             self.assessments.initialize(db)
             self.support.initialize(db)
+            self.library.initialize(db)
             self.email_auth.initialize(db)
             self.content.install_usage_guards(db)
             # Upgrade existing pilot databases without changing their users or XP.
@@ -538,6 +543,14 @@ class AcademyHandler(BaseHTTPRequestHandler):
                 session = self.session(db)
                 user_id = self.require_user(session)
                 result = self.server.study_plan.get(user_id)
+            elif method == "GET" and path == "/api/library":
+                session = self.session(db)
+                user_id = self.require_user(session)
+                result = self.server.library.get(user_id)
+            elif method == "GET" and path == "/api/practice-insights":
+                session = self.session(db)
+                user_id = self.require_user(session)
+                result = self.server.practice_insights.get(user_id)
             elif method == "GET" and path == "/api/account/sessions":
                 session = self.session(db)
                 self.require_user(session)
@@ -570,6 +583,7 @@ class AcademyHandler(BaseHTTPRequestHandler):
                 result.update(self.server.assessments.export(user_id, db=db))
                 result.update(self.server.support.export_data(db, user_id))
                 result["emailAccount"] = self.server.email_auth.export_data(db, user_id)
+                result["learnerLibrary"] = self.server.library.export_data(db, user_id)
                 response_headers = {"Content-Disposition": 'attachment; filename="academy-data.json"'}
             elif method in ("POST", "PUT", "DELETE"):
                 data = self.body()
@@ -666,6 +680,9 @@ class AcademyHandler(BaseHTTPRequestHandler):
             session = self.new_session(db, old_hash=session["token_hash"])
             return self.payload(db, session)
         user_id = self.require_user(session)
+        if method == "PUT" and path == "/api/library/bookmarks":
+            library_data = {key: value for key, value in data.items() if key != "csrfToken"}
+            return self.server.library.set_bookmark(user_id, library_data, db=db)
         if method == "POST" and path == "/api/account/email/verification":
             return self.server.email_auth.request_verification(user_id, actor=self.client_address[0])
         if method == "POST" and path == "/api/account/email/change":

@@ -11,6 +11,7 @@ import secrets
 import sqlite3
 import sys
 import time
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 ROOT = Path(__file__).resolve().parent
 REQUIRED_TABLES = {'users', 'sessions', 'profiles', 'completions'}
@@ -22,6 +23,15 @@ class ManagementError(Exception):
 
 def default_database() -> Path:
     return Path(os.environ.get('ACADEMY_DB', str(ROOT.parent / 'academy-data' / 'academy.sqlite3'))).expanduser().resolve()
+
+
+def athens_time(timestamp):
+    try:
+        zone = ZoneInfo('Europe/Athens')
+    except ZoneInfoNotFoundError:
+        with (ROOT / 'data' / 'timezones' / 'Europe' / 'Athens').open('rb') as source:
+            zone = ZoneInfo.from_file(source, key='Europe/Athens')
+    return datetime.fromisoformat(timestamp).astimezone(zone).strftime('%d/%m/%Y %H:%M')
 
 
 def read_connection(path: Path):
@@ -128,6 +138,11 @@ def main(argv=None):
     restore = commands.add_parser('restore')
     restore.add_argument('backup', type=Path)
     restore.add_argument('--output', type=Path, required=True)
+    scheduled = commands.add_parser('backup-if-due')
+    scheduled.add_argument('--db', type=Path, default=default_database())
+    scheduled.add_argument('--directory', type=Path)
+    scheduled.add_argument('--interval-hours', type=float, default=24)
+    scheduled.add_argument('--json', action='store_true')
     doctor = commands.add_parser('doctor')
     doctor.add_argument('--db', type=Path, default=default_database())
     doctor.add_argument('--production', action='store_true')
@@ -144,6 +159,20 @@ def main(argv=None):
                     print(f"{check['status'].upper()} — {check['message']}")
                 print(report['notice'])
             return 0 if report['checksPassed'] else 1
+        elif args.command == 'backup-if-due':
+            from backup_schedule import backup_if_due, BackupScheduleError
+            try:
+                report = backup_if_due(args.db, args.directory, args.interval_hours)
+            except BackupScheduleError as error:
+                raise ManagementError(str(error)) from None
+            if args.json:
+                print(json.dumps(report, ensure_ascii=False, indent=2))
+            else:
+                print('Δημιουργήθηκε ελεγμένο αντίγραφο.' if report['status'] == 'created'
+                      else 'Δεν χρειάζεται νέο αντίγραφο ακόμη· το τελευταίο επαληθεύθηκε.')
+                print(f"Αντίγραφο: {report['backup']}")
+                print(f"Νέο αντίγραφο μπορεί να δημιουργηθεί μετά: {athens_time(report['nextDueAt'])} (ώρα Ελλάδας).")
+                print(report['notice'])
         elif args.command == 'check':
             check_database(args.db)
             print('Ο έλεγχος ακεραιότητας της βάσης πέρασε.')
